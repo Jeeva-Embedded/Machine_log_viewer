@@ -1,0 +1,24 @@
+# logs & generated output
+CAN_raw_*.txt
+CAN_decoded_*.csv
+CAN_M*_raw_*.txt
+CAN_M*_decoded_*.csv
+server_out.txt
+server_err.txt
+tunnel_out.txt
+tunnel_err.txt
+proxy_out.txt
+proxy_err.txt
+
+# python
+__pycache__/
+*.pyc
+
+# editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# screenshots & scratch
+Screenshot*.png
+*.xlsx
