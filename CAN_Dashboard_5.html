@@ -89,6 +89,15 @@ input,select{font-family:inherit;font-size:13px;}
 .sidebar-dl-btns{padding:8px;display:flex;flex-direction:column;gap:4px;}
 .sidebar-dl-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
 .sidebar-dl-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+.la-machine{font-size:11px;font-weight:700;color:var(--green-light);padding:6px 4px 2px;letter-spacing:.5px;}
+.la-row{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:3px 4px;border-radius:5px;}
+.la-row:hover{background:rgba(255,255,255,.06);}
+.la-date{color:rgba(255,255,255,.6);font-size:10px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.la-dl{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,255,255,.15);cursor:pointer;text-decoration:none;}
+.la-dl.raw{color:#00d4ff;border-color:rgba(0,212,255,.4);}
+.la-dl.csv{color:#a855f7;border-color:rgba(168,85,247,.4);}
+.la-dl:hover{background:rgba(255,255,255,.1);}
+.la-empty{color:rgba(255,255,255,.3);padding:6px 4px;font-size:10px;}
 
 /* ── LAYOUT ── */
 .page-wrap{margin-top:var(--topbar-h);margin-left:var(--sidebar-w);min-height:calc(100vh - var(--topbar-h));padding:24px;}
@@ -471,9 +480,9 @@ input,select{font-family:inherit;font-size:13px;}
       </button>
     </div>
 
-    <!-- Downloads -->
-    <div class="sidebar-section" style="margin-top:auto;">
-      <div class="sidebar-section-label">Export</div>
+    <!-- Downloads (current session, built in browser) -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Export (this session)</div>
       <div class="sidebar-dl-btns">
         <button class="sidebar-dl-btn" id="btn-dl-txt" onclick="downloadTxt()" style="display:none">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -483,6 +492,18 @@ input,select{font-family:inherit;font-size:13px;}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download Decoded CSV
         </button>
+      </div>
+    </div>
+
+    <!-- Saved log archive (from the laptop) -->
+    <div class="sidebar-section" style="margin-top:auto;">
+      <div class="sidebar-section-label" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Log Archive</span>
+        <button onclick="loadLogList()" title="Refresh"
+          style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:13px;padding:0 4px;">⟳</button>
+      </div>
+      <div id="log-archive" style="max-height:240px;overflow-y:auto;font-size:11px;">
+        <div style="color:rgba(255,255,255,.3);padding:6px 4px;">Loading…</div>
       </div>
     </div>
 
@@ -893,6 +914,60 @@ input,select{font-family:inherit;font-size:13px;}
         </div>
       </div>
 
+      <!-- m7 -->
+      <div class="motor-card" id="card-m7" style="display:none">
+        <div class="motor-card-header">
+          <div class="motor-card-title"><div class="motor-card-dot"></div><span id="title-m7">Motor 7</span></div>
+          <span class="motor-state-badge idle" id="state-m7">IDLE</span>
+        </div>
+        <div class="motor-card-body">
+          <div class="metrics-grid">
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m7-trpm">—</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m7-prpm">—</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m7-pwm">—</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m7-curr">—<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m7-volt">—<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m7-pwr">—<span class="metric-unit">W</span></div></div>
+          </div>
+          <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m7-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m7-rpm-pct">0%</span></div>
+          <div class="temp-pair">
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m7-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m7-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m7-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m7-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+          </div>
+          <div class="card-chart-row">
+            <div class="card-chart-box" onclick="openModal('M7','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m7-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M7','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m7-curr"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- m8 -->
+      <div class="motor-card" id="card-m8" style="display:none">
+        <div class="motor-card-header">
+          <div class="motor-card-title"><div class="motor-card-dot"></div><span id="title-m8">Motor 8</span></div>
+          <span class="motor-state-badge idle" id="state-m8">IDLE</span>
+        </div>
+        <div class="motor-card-body">
+          <div class="metrics-grid">
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m8-trpm">—</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m8-prpm">—</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m8-pwm">—</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m8-curr">—<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m8-volt">—<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m8-pwr">—<span class="metric-unit">W</span></div></div>
+          </div>
+          <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m8-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m8-rpm-pct">0%</span></div>
+          <div class="temp-pair">
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m8-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m8-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m8-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m8-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+          </div>
+          <div class="card-chart-row">
+            <div class="card-chart-box" onclick="openModal('M8','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m8-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M8','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m8-curr"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end extra-motor-grid -->
 
     <!-- AUTO LEVELLER -->
@@ -996,9 +1071,9 @@ const MACHINE_DEFS = {
     addrMap:{0x01:'MB',0x02:'Cylinder',0x03:'Beater',0x04:'Cage',
              0x05:'CardFeed',0x06:'BeaterFeed',0x07:'Coiler',0x08:'AFCyl',0x09:'AFFeed'},
     motorMap:{0x02:'fr',0x03:'br',0x04:'cr',0x05:'m4',0x06:'m5',0x07:'m6',0x08:'m7',0x09:'m8'},
-    motorNames:{fr:'Cylinder',br:'Beater',cr:'Cage',m4:'Card Feed',m5:'Beater Feed',m6:'Coiler',m7:'AF Cylinder',m8:'AF Feed'},
+    motorNames:{fr:'Cylinder',br:'Beater',cr:'Cage',m4:'Card Feed',m5:'Beater Feed',m6:'Coiler',m7:'Picker Cylinder',m8:'AF Feed'},
     setupLabels:{fr:'Cylinder',br:'Beater',cr:'Cage'},
-    extraMotors:['m4','m5','m6'], // show these extra cards (m7/m8 AF motors optional)
+    extraMotors:['m4','m5','m6','m7','m8'], // all 8 carding motors
     fnMap:{0x01:'MotorState',0x02:'Error',0x03:'DriveCheck',0x04:'DriveCheckResp',
            0x06:'DataReq',0x07:'RunSetup',0x08:'AnalysisData',0x09:'RuntimeData',
            0x0A:'Diagnostics',0x0B:'CylExtData',0x0D:'ChangeTarget',0x0F:'ACK',
@@ -1049,13 +1124,13 @@ const CSV_HEADER="Timestamp,Machine,CAN_ID,FunctionID,FunctionName,Source_Addr,S
 // ── STATE ──
 let ws=null,activeMachine=1,simTimer=null;
 let modalChart=null,modalKey=null,modalType=null,modalInterval=null;
-const ALL_MOTOR_KEYS=['FR','BR','CR','M4','M5','M6'];
+const ALL_MOTOR_KEYS=['FR','BR','CR','M4','M5','M6','M7','M8'];
 function makeMD(){return{labels:[],tRPM:[],pRPM:[],curr:[]};}
 function makeMachineState(){
   const cd={AL:{labels:[],scan:[],coil:[]}}, fh={AL:{labels:[],scan:[],coil:[]}};
   ALL_MOTOR_KEYS.forEach(k=>{cd[k]=makeMD();fh[k]=makeMD();});
   return{frameCount:0,alActive:false,stats:{runtime:0,al:0,cmd:0,err:0},rawLines:[],csvRows:[],
-    motorStopTimer:{FR:null,BR:null,CR:null,M4:null,M5:null,M6:null},chartData:cd,fullHistory:fh};
+    motorStopTimer:{FR:null,BR:null,CR:null,M4:null,M5:null,M6:null,M7:null,M8:null},chartData:cd,fullHistory:fh};
 }
 const machineState={1:makeMachineState(),2:makeMachineState(),3:makeMachineState(),4:makeMachineState()};
 
@@ -1099,7 +1174,7 @@ function openMachine(mid){
   document.getElementById('settings-flyer-section').style.display=s(def.hasLifts);
   // Extra motor cards (m4-m6)
   const extraMotors=def.extraMotors||[];
-  ['m4','m5','m6'].forEach(id=>{
+  ['m4','m5','m6','m7','m8'].forEach(id=>{
     const show=extraMotors.includes(id);
     const card=document.getElementById('card-'+id);
     if(card)card.style.display=show?'':'none';
@@ -1112,6 +1187,7 @@ function openMachine(mid){
   // see live data immediately without pressing Connect.
   if(location.protocol==='http:'||location.protocol==='https:'){
     setTimeout(()=>{ if(!ws||ws.readyState>1) connectWS(); }, 300);
+    loadLogList();
   }
 }
 function goHome(){
@@ -1159,6 +1235,8 @@ const charts={
   M4:{rpm:makeRPMChart('chart-m4-rpm','#00d4ff','#ffd600'),curr:makeCurrentChart('chart-m4-curr','#ff8c00')},
   M5:{rpm:makeRPMChart('chart-m5-rpm','#00ff9d','#a855f7'),curr:makeCurrentChart('chart-m5-curr','#ec4899')},
   M6:{rpm:makeRPMChart('chart-m6-rpm','#7dba3a','#2471a3'),curr:makeCurrentChart('chart-m6-curr','#c0392b')},
+  M7:{rpm:makeRPMChart('chart-m7-rpm','#2471a3','#ffd600'),curr:makeCurrentChart('chart-m7-curr','#d97706')},
+  M8:{rpm:makeRPMChart('chart-m8-rpm','#a855f7','#00ff9d'),curr:makeCurrentChart('chart-m8-curr','#ec4899')},
   AL:makeALChart('chart-al')
 };
 
@@ -1527,6 +1605,47 @@ function loadFile(event){
 function downloadTxt(){const mst=machineState[activeMachine],ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([mst.rawLines.join('\n')],{type:'text/plain'}));a.download=`CAN_M${activeMachine}_raw_${ts}.txt`;a.click();}
 function downloadCsv(){const mst=machineState[activeMachine],ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([CSV_HEADER+'\n'+mst.csvRows.join('\n')],{type:'text/csv'}));a.download=`CAN_M${activeMachine}_decoded_${ts}.csv`;a.click();}
 
+// ── LOG ARCHIVE (saved files on the laptop, fetched via the relay) ──
+function fmtSize(b){ if(b>=1048576) return (b/1048576).toFixed(1)+' MB'; if(b>=1024) return (b/1024).toFixed(0)+' KB'; return b+' B'; }
+
+async function loadLogList(){
+  const box=document.getElementById('log-archive');
+  // Only works when served by the relay (http/https), not file://
+  if(location.protocol==='file:'){ box.innerHTML='<div class="la-empty">Open via the website to see saved logs.</div>'; return; }
+  box.innerHTML='<div class="la-empty">Loading…</div>';
+  try{
+    const r=await fetch('/api/logs',{cache:'no-store'});
+    const j=await r.json();
+    if(!j.agent){ box.innerHTML='<div class="la-empty">Laptop agent offline — start START_AGENT.bat.</div>'; return; }
+    const files=j.files||[];
+    if(files.length===0){ box.innerHTML='<div class="la-empty">No logs saved yet.</div>'; return; }
+    // group: machine -> date -> {raw, csv}
+    const g={};
+    for(const f of files){
+      g[f.machine]=g[f.machine]||{name:f.machine_name,dates:{}};
+      g[f.machine].dates[f.date]=g[f.machine].dates[f.date]||{};
+      g[f.machine].dates[f.date][f.kind]=f;
+    }
+    let html='';
+    Object.keys(g).sort().forEach(mid=>{
+      html+=`<div class="la-machine">${g[mid].name}</div>`;
+      const dates=Object.keys(g[mid].dates).sort().reverse();
+      for(const d of dates){
+        const e=g[mid].dates[d];
+        let links='';
+        if(e.raw)     links+=`<a class="la-dl raw" href="/api/log?name=${encodeURIComponent(e.raw.name)}" title="${fmtSize(e.raw.size)}">RAW</a>`;
+        if(e.decoded) links+=`<a class="la-dl csv" href="/api/log?name=${encodeURIComponent(e.decoded.name)}" title="${fmtSize(e.decoded.size)}">CSV</a>`;
+        html+=`<div class="la-row"><span class="la-date">${d}</span>${links}</div>`;
+      }
+    });
+    box.innerHTML=html;
+  }catch(err){
+    box.innerHTML='<div class="la-empty">Could not load archive.</div>';
+  }
+}
+// refresh archive every 30s while viewing
+setInterval(()=>{ if(document.getElementById('view-dash').style.display==='block') loadLogList(); }, 30000);
+
 // ── CLEAR ──
 function clearAll(){
   if(simTimer){clearTimeout(simTimer);simTimer=null;}
@@ -1534,7 +1653,7 @@ function clearAll(){
   document.getElementById('log-container').innerHTML='';
   setFileNote(false);
   updateKPI(machineState[activeMachine]);
-  ['fr','br','cr','m4','m5','m6'].forEach(p=>{
+  ['fr','br','cr','m4','m5','m6','m7','m8'].forEach(p=>{
     ['trpm','prpm','pwm','curr','volt','pwr'].forEach(k=>setVal(p+'-'+k,'—'));
     ['fet','mot'].forEach(k=>{setVal(p+'-'+k,'—');const a=document.getElementById(p+'-'+k+'-arc');if(a){a.setAttribute('stroke-dasharray','0 100.53');a.style.stroke='#22c55e';}});
     setBar(p+'-rpm-bar',0);setVal(p+'-rpm-pct','0%');

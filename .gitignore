@@ -10,6 +10,9 @@ tunnel_err.txt
 proxy_out.txt
 proxy_err.txt
 
+# saved CAN logs (live on the laptop only)
+logs/
+
 # python
 __pycache__/
 *.pyc
