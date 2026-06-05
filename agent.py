@@ -24,8 +24,8 @@ from datetime import datetime
 import aiohttp
 
 # ── EDIT THESE (or set as environment variables) ──
-RELAY_URL  = os.environ.get('RELAY_URL',  'wss://YOUR-APP.onrender.com/feed')
-FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')
+RELAY_URL  = os.environ.get('RELAY_URL',  'wss://machine-log-viewer.onrender.com/feed')
+FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')  # real token set in START_AGENT.bat
 HOST       = os.environ.get('CAN_HOST',   '192.168.1.125')   # converter IP on LAN
 
 MACHINES = {1: 1001, 2: 2001, 3: 3001, 4: 4001}

@@ -22,3 +22,12 @@ Thumbs.db
 # screenshots & scratch
 Screenshot*.png
 *.xlsx
+
+# local launchers (contain the secret FEED_TOKEN)
+START_AGENT.bat
+START_REMOTE.bat
+
+# test / scratch scripts
+test_*.py
+mock_device.py
+read_excel*.py
