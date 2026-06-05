@@ -36,7 +36,7 @@ async def index(request):
 
 
 async def health(request):
-    return web.json_response({'status': 'ok', 'version': 'autodeploy-test-1',
+    return web.json_response({'status': 'ok', 'version': 'v2-agentfix',
                               'viewers': len(viewers),
                               'agent_connected': agent_ws is not None,
                               'log_files': len(manifest)})
@@ -118,9 +118,12 @@ async def feed_handler(request):
                 for d in dead:
                     viewers.discard(d)
     finally:
-        agent_ws = None
-        manifest.clear()
-        print("[-] Agent disconnected")
+        # only clear if this is still the active agent (avoids a reconnect race
+        # where an old connection's cleanup wipes a newer connection)
+        if agent_ws is ws:
+            agent_ws = None
+            manifest.clear()
+            print("[-] Agent disconnected")
     return ws
 
 

@@ -23,7 +23,7 @@ import base64
 from datetime import datetime
 import aiohttp
 
-RELAY_URL  = os.environ.get('RELAY_URL',  'wss://machine-log-viewer.onrender.com/feed')
+RELAY_URL  = os.environ.get('RELAY_URL',  'wss://machine-log-viewer-kcx3.onrender.com/feed')
 FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')
 HOST       = os.environ.get('CAN_HOST',   '192.168.1.125')
 LOG_DIR    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
@@ -115,9 +115,11 @@ def _log_write(mid, kind, line, header=None):
 async def read_machine(mid, port, relay):
     addr_map = MACHINE_ADDR.get(mid, MACHINE_ADDR[1])
     fn_map   = MACHINE_FN.get(mid, MACHINE_FN[1])
+    loop = asyncio.get_event_loop()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setblocking(False)   # non-blocking connect so an offline converter can't freeze the event loop
     try:
-        sock.connect((HOST, port)); sock.setblocking(False)
+        await asyncio.wait_for(loop.sock_connect(sock, (HOST, port)), timeout=5)
         print(f"[M{mid}] reading {HOST}:{port}")
     except Exception as e:
         print(f"[M{mid}] offline ({HOST}:{port}) — {e}")
@@ -125,7 +127,7 @@ async def read_machine(mid, port, relay):
         except Exception: pass
         sock.close(); return
 
-    loop = asyncio.get_event_loop(); buf = b''
+    buf = b''
     try:
         while not relay.closed:
             try:
