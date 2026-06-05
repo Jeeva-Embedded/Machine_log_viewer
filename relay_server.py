@@ -36,7 +36,8 @@ async def index(request):
 
 
 async def health(request):
-    return web.json_response({'status': 'ok', 'viewers': len(viewers),
+    return web.json_response({'status': 'ok', 'version': 'autodeploy-test-1',
+                              'viewers': len(viewers),
                               'agent_connected': agent_ws is not None,
                               'log_files': len(manifest)})
 
