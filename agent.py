@@ -108,40 +108,46 @@ def csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n, dlc, nb, data_hex
     return ','.join(c)
 
 
-# ── per-machine log files — a NEW raw+csv pair per live connect -> disconnect session ──
-_logfiles = {}          # (mid, kind) -> {'session':str, 'fh':file}
-_machine_session = {}   # mid -> session id (set when the converter link connects)
+# ── recording: a NEW raw+csv set per "Connect Live -> Disconnect" on the dashboard ──
+# The relay tells us when the FIRST viewer connects (record_start) and when the LAST
+# viewer leaves (record_stop). Frames are only written to disk while recording.
+_logfiles  = {}      # (mid, kind) -> {'session':id, 'fh':file}
+RECORDING  = False
+_record_id = None
 
-def start_session(mid):
-    """Begin a new logging session for this machine (called when the live link connects)."""
-    _machine_session[mid] = datetime.now().strftime('%Y%m%d-%H%M%S')
+def record_start():
+    global RECORDING, _record_id
+    _record_id = datetime.now().strftime('%Y%m%d-%H%M%S')
+    RECORDING = True
+    print(f"[REC] started — session {_record_id}")
 
-def end_session(mid):
-    """Close this machine's session files (called when the live link drops)."""
-    for kind in ('raw', 'decoded'):
-        cur = _logfiles.pop((mid, kind), None)
-        if cur:
-            try: cur['fh'].close()
-            except Exception: pass
-    _machine_session.pop(mid, None)
+def record_stop():
+    global RECORDING
+    if not RECORDING:
+        return
+    RECORDING = False
+    for key in list(_logfiles):
+        try: _logfiles[key]['fh'].close()
+        except Exception: pass
+        del _logfiles[key]
+    print("[REC] stopped — session saved")
 
 def _log_write(mid, kind, line, header=None):
-    sess = _machine_session.get(mid)
-    if not sess:
-        return   # no active session (link not connected) — nothing to write
+    if not RECORDING or not _record_id:
+        return   # not recording (no viewer connected) — don't save
     key = (mid, kind)
     cur = _logfiles.get(key)
-    if cur is None or cur['session'] != sess:
+    if cur is None or cur['session'] != _record_id:
         if cur:
             try: cur['fh'].close()
             except Exception: pass
         ext = 'txt' if kind == 'raw' else 'csv'
-        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{sess}_{kind}.{ext}")
+        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{_record_id}_{kind}.{ext}")
         new = not os.path.exists(path)
         fh = open(path, 'a', encoding='utf-8')
         if new and header:
             fh.write(header)
-        _logfiles[key] = {'session': sess, 'fh': fh}
+        _logfiles[key] = {'session': _record_id, 'fh': fh}
         cur = _logfiles[key]
     cur['fh'].write(line)
     cur['fh'].flush()
@@ -158,8 +164,7 @@ async def read_machine(mid, port, relay):
         sock.setblocking(False)   # non-blocking connect so an offline converter can't freeze the loop
         try:
             await asyncio.wait_for(loop.sock_connect(sock, (HOST, port)), timeout=5)
-            start_session(mid)   # live link up -> begin a fresh log session
-            print(f"[M{mid}] reading {HOST}:{port}  (session {_machine_session[mid]})")
+            print(f"[M{mid}] reading {HOST}:{port}")
         except Exception as e:
             print(f"[M{mid}] offline ({HOST}:{port}) — {e}; retry in 5s")
             try: await relay.send_str(json.dumps({'machine': mid, 'event': 'offline'}))
@@ -206,13 +211,12 @@ async def read_machine(mid, port, relay):
                 except (ConnectionResetError, OSError):
                     break
         except asyncio.CancelledError:
-            end_session(mid); sock.close(); return
+            sock.close(); return
         finally:
             sock.close()
-        # converter dropped the connection — close this session's files (saved), then reconnect
-        end_session(mid)
+        # converter dropped the connection — reconnect (recording is viewer-driven, not link-driven)
         if not relay.closed:
-            print(f"[M{mid}] converter link dropped — session saved, reconnecting in 3s")
+            print(f"[M{mid}] converter link dropped — reconnecting in 3s")
             await asyncio.sleep(3)
 
 
@@ -276,8 +280,13 @@ async def recv_control(relay):
                 j = json.loads(m.data)
             except Exception:
                 continue
-            if j.get('type') == 'get_file':
+            t = j.get('type')
+            if t == 'get_file':
                 await send_file(relay, j.get('req_id'), j.get('name', ''))
+            elif t == 'record_start':
+                record_start()
+            elif t == 'record_stop':
+                record_stop()
         elif m.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
             break
 

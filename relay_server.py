@@ -79,6 +79,10 @@ async def feed_handler(request):
     await ws.prepare(request)
     agent_ws = ws
     print("[+] Agent connected")
+    # if viewers are already watching, tell the agent to start recording immediately
+    if viewers:
+        try: await ws.send_str(json.dumps({'type': 'record_start'}))
+        except Exception: pass
     try:
         async for msg in ws:
             if msg.type != WSMsgType.TEXT:
@@ -130,8 +134,13 @@ async def feed_handler(request):
 async def view_handler(request):
     ws = web.WebSocketResponse(heartbeat=30, max_msg_size=0)
     await ws.prepare(request)
+    was_empty = (len(viewers) == 0)
     viewers.add(ws)
     print(f"[+] Viewer connected ({len(viewers)} total)")
+    # first viewer connecting -> start a recording session on the agent
+    if was_empty and agent_ws is not None:
+        try: await agent_ws.send_str(json.dumps({'type': 'record_start'}))
+        except Exception: pass
     for data in list(last_by_key.values()):
         try:
             await ws.send_str(data)
@@ -144,6 +153,10 @@ async def view_handler(request):
     finally:
         viewers.discard(ws)
         print(f"[-] Viewer left ({len(viewers)} total)")
+        # last viewer left -> stop recording (session saved on the laptop)
+        if len(viewers) == 0 and agent_ws is not None:
+            try: await agent_ws.send_str(json.dumps({'type': 'record_stop'}))
+            except Exception: pass
     return ws
 
 
