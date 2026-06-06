@@ -51,3 +51,50 @@ Trigger points and the recommended upgrade for each:
 
 **Order of priority if productizing:** Go agent first (reliability), then MQTT+Grafana
 (scale), then a UI framework (maintainability).
+
+---
+
+## Phased plan
+
+### Phase 1 — CURRENT (live)
+Laptop runs `agent.py` (reads the converter on the factory LAN and dials **up** to
+the Render relay). Browser opens the Render URL. A laptop must stay on next to the
+machine. Free (Render free tier). This is what's deployed today.
+
+```
+ Browser ──https──► [ Render: relay + dashboard ] ◄──wss── [ Laptop agent ] ──TCP──► UT-6504-FD
+```
+
+### Phase 2 — PLANNED: converter → router → server (no laptop)
+Remove the laptop entirely. The UT-6504-FD is plugged into the **factory router**
+(internet access) and configured in **TCP-Client mode** so the converter itself
+**dials out** to our cloud server and streams the raw CAN frames.
+
+```
+ Machine ─CAN─► UT-6504-FD ─Ethernet─► Router ─Internet(NAT, outbound)─► Cloud Server ──► Browsers
+```
+
+How it works / what's needed:
+- **Converter config:** set Network mode = *TCP Client*, Remote Server = our server's
+  public IP, Remote Port = e.g. `443`/`9001`, and set the converter's Gateway to the
+  router so it can reach the internet. It dials **outbound**, so **no port-forwarding
+  or static public IP** is needed at the factory.
+- **Server side needs a real public TCP port.** Render web services only expose
+  HTTP/HTTPS, so Phase 2 needs a small **VPS** (DigitalOcean / AWS Lightsail / Hetzner,
+  ~$5/mo) with a public IP. A `tcp_server.py` *listens* for the converter, decodes the
+  69-byte frames (reuse the exact decode logic already in `agent.py`/`server.py` —
+  only the direction flips from "connect to converter" to "accept from converter"),
+  then serves the dashboard + `/ws` to browsers (same `relay_server.py` UI).
+- **Multiple converters / channels:** each CAN port (1001–4001) can be pointed at the
+  server; tag each stream by source so the dashboard routes it to the right machine.
+- **Security:** restrict the listener to the converter's source, or add a simple
+  handshake/token, since a raw public TCP port is otherwise open.
+
+Trade-off vs Phase 1: Phase 2 is hands-off (no laptop) and "always on", but costs a
+small VPS fee and requires reconfiguring the converter. Phase 1 stays as the free
+fallback.
+
+### Phase 2+ (scale, from the upgrade table above)
+Go agent/listener (single binary), MQTT + Grafana for many machines, optional UI
+framework. Permanent fixed URL via a named Cloudflare tunnel (Phase 1) or the VPS
+domain (Phase 2).
