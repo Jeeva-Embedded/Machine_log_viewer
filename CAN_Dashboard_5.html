@@ -484,6 +484,10 @@ input,select{font-family:inherit;font-size:13px;}
     <div class="sidebar-section">
       <div class="sidebar-section-label">Export (this session)</div>
       <div class="sidebar-dl-btns">
+        <button class="sidebar-dl-btn" id="btn-replay" onclick="replayLoaded()" style="display:none;color:#ffd600;border-color:rgba(255,214,0,.35);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Replay Loaded Log
+        </button>
         <button class="sidebar-dl-btn" id="btn-dl-txt" onclick="downloadTxt()" style="display:none">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download RAW TXT
@@ -1130,12 +1134,62 @@ function makeMachineState(){
   const cd={AL:{labels:[],scan:[],coil:[]}}, fh={AL:{labels:[],scan:[],coil:[]}};
   ALL_MOTOR_KEYS.forEach(k=>{cd[k]=makeMD();fh[k]=makeMD();});
   return{frameCount:0,alActive:false,stats:{runtime:0,al:0,cmd:0,err:0},rawLines:[],csvRows:[],
-    motorStopTimer:{FR:null,BR:null,CR:null,M4:null,M5:null,M6:null,M7:null,M8:null},chartData:cd,fullHistory:fh};
+    motorStopTimer:{FR:null,BR:null,CR:null,M4:null,M5:null,M6:null,M7:null,M8:null},
+    chartData:cd,fullHistory:fh,
+    // snapshot of latest values per machine, so switching machines shows the
+    // right data (and switching back restores it) instead of leaking values
+    snap:{motors:{}, lifts:{}, states:{}, al:null, logHtml:''}};
 }
 const machineState={1:makeMachineState(),2:makeMachineState(),3:makeMachineState(),4:makeMachineState()};
 
+// ── RE-RENDER A MACHINE FROM ITS OWN SNAPSHOT (fixes value-leak on switch) ──
+function resetArc(p,k){const a=document.getElementById(p+'-'+k+'-arc');if(a){a.setAttribute('stroke-dasharray','0 100.53');a.style.stroke='#22c55e';}setVal(p+'-'+k,'—');}
+function renderMachine(mid){
+  const mst=machineState[mid], def=MACHINE_DEFS[mid]||MACHINE_DEFS[1];
+  // motor cards: restore from snapshot or blank
+  ['fr','br','cr','m4','m5','m6','m7','m8'].forEach(p=>{
+    const d=mst.snap.motors[p];
+    if(d){ paintMotor(p,d); }
+    else{
+      ['trpm','prpm','pwm','curr','volt','pwr'].forEach(k=>setVal(p+'-'+k,'—'));
+      setBar(p+'-rpm-bar',0); setVal(p+'-rpm-pct','0%');
+      resetArc(p,'fet'); resetArc(p,'mot');
+      const c=document.getElementById('card-'+p); if(c)c.classList.remove('active');
+    }
+    const st=document.getElementById('state-'+p);
+    if(st){ const cmd=mst.snap.states[p];
+      if(cmd!==undefined){ st.textContent=MOTOR_STATE[cmd]||'CMD '+cmd; st.className='motor-state-badge '+(cmd===2?'running':cmd===1||cmd===3?'stop':'idle'); }
+      else{ st.textContent='IDLE'; st.className='motor-state-badge idle'; } }
+  });
+  // lift cards: blank then restore
+  ['ll','rl'].forEach(p=>{
+    ['tpos','ppos','rpm','curr','volt','dir'].forEach(k=>setVal(p+'-'+k,'—'));
+    resetArc(p,'fet'); resetArc(p,'mot');
+    const c=document.getElementById('card-'+p); if(c)c.classList.remove('active');
+  });
+  Object.keys(mst.snap.lifts).forEach(src=>updateLiftUI(parseInt(src), mst.snap.lifts[src]));
+  // AL panel
+  if(mst.snap.al){ setVal('al-scan',mst.snap.al.scan); setVal('al-coil',mst.snap.al.coil); setVal('al-ctr-val',mst.snap.al.ctr); }
+  else{ setVal('al-scan','—'); setVal('al-coil','—'); setVal('al-ctr-val','—'); }
+  // charts from this machine's stored data
+  ALL_MOTOR_KEYS.forEach(k=>{ if(!charts[k])return; const cd=mst.chartData[k];
+    charts[k].rpm.data.labels=cd.labels; charts[k].rpm.data.datasets[0].data=cd.tRPM; charts[k].rpm.data.datasets[1].data=cd.pRPM; charts[k].rpm.update('none');
+    charts[k].curr.data.labels=cd.labels; charts[k].curr.data.datasets[0].data=cd.curr; charts[k].curr.update('none'); });
+  const ald=mst.chartData.AL; charts.AL.data.labels=ald.labels; charts.AL.data.datasets[0].data=ald.scan; charts.AL.data.datasets[1].data=ald.coil; charts.AL.update('none');
+  // frame log + KPIs for this machine
+  document.getElementById('log-container').innerHTML = mst.snap.logHtml||'';
+  updateKPI(mst);
+  // export / replay buttons reflect this machine's data
+  const hasData = mst.rawLines.length>0;
+  document.getElementById('btn-dl-txt').style.display = hasData?'flex':'none';
+  document.getElementById('btn-dl-csv').style.display = hasData?'flex':'none';
+  document.getElementById('btn-replay').style.display = (mst.loadedFrames&&mst.loadedFrames.length)?'flex':'none';
+}
+
 // ── NAVIGATION ──
 function openMachine(mid){
+  // save the log of the machine we're leaving
+  if(machineState[activeMachine]) machineState[activeMachine].snap.logHtml=document.getElementById('log-container').innerHTML;
   activeMachine=mid;
   const cfg=MACHINE_CONFIG[mid];
   const def=MACHINE_DEFS[mid];
@@ -1183,6 +1237,8 @@ function openMachine(mid){
     }
   });
   document.getElementById('extra-motor-grid').style.display=extraMotors.length>0?'':'none';
+  // repaint this machine's own values/charts/log (prevents values leaking between machines)
+  renderMachine(mid);
   // Auto-connect when served over the web (server.py / tunnel) so remote viewers
   // see live data immediately without pressing Connect.
   if(location.protocol==='http:'||location.protocol==='https:'){
@@ -1306,8 +1362,8 @@ function setTempArc(arcId,valId,temp){
   val.style.color=col;
 }
 
-function updateMotorUI(mid,pfx,d){
-  if(mid!==activeMachine)return;
+// paint only the DOM for one motor card (no chart push)
+function paintMotor(pfx,d){
   const ca=(d.currADC*CURR_GAIN).toFixed(3),vv=(d.voltADC*VOLT_GAIN).toFixed(2),pw=(parseFloat(ca)*parseFloat(vv)).toFixed(1);
   setVal(pfx+'-trpm',d.tRPM);setVal(pfx+'-prpm',d.pRPM);setVal(pfx+'-pwm',d.pwm);
   setVal(pfx+'-curr',ca);setVal(pfx+'-volt',vv);setVal(pfx+'-pwr',pw);
@@ -1316,9 +1372,14 @@ function updateMotorUI(mid,pfx,d){
   setTempArc(pfx+'-fet-arc',pfx+'-fet',d.fet);
   setTempArc(pfx+'-mot-arc',pfx+'-mot',d.mot);
   const card=document.getElementById('card-'+pfx);if(card)card.classList.add('active');
-  pushChart(mid,pfx.toUpperCase(),d.tRPM,d.pRPM,parseFloat(ca));
+}
+
+function updateMotorUI(mid,pfx,d){
   const mst=machineState[mid],KEY=pfx.toUpperCase();
+  mst.snap.motors[pfx]=d;                                   // remember for re-render on machine switch
+  pushChart(mid,KEY,d.tRPM,d.pRPM,d.currADC*CURR_GAIN);     // stores history; paints chart only if active
   if(mst.motorStopTimer[KEY]){clearTimeout(mst.motorStopTimer[KEY]);mst.motorStopTimer[KEY]=null;}
+  if(mid===activeMachine) paintMotor(pfx,d);
 }
 
 function setMotorState(mid,addr,cmd){
@@ -1326,6 +1387,7 @@ function setMotorState(mid,addr,cmd){
   const pfxLow=def.motorMap[addr];if(!pfxLow)return;
   const pfx=pfxLow.toUpperCase();
   const p=pfxLow,mst=machineState[mid];
+  mst.snap.states[p]=cmd;   // remember for re-render
   if(mid===activeMachine){
     const el=document.getElementById('state-'+p);if(!el)return;
     el.textContent=MOTOR_STATE[cmd]||'CMD '+cmd;
@@ -1414,6 +1476,7 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
   // ── AL SENSOR (FN=0x1E) — DrawFrame only ──
   else if(fn===0x1E&&data.length>=5&&def.hasAL){
     mst.stats.al++;const scan=(data[1]<<8)|data[2],coil=(data[3]<<8)|data[4];
+    mst.snap.al={scan,coil,ctr:data[0]};   // remember for re-render
     if(live){setVal('al-scan',scan);setVal('al-coil',coil);setVal('al-ctr-val',data[0]);}
     pushALChart(mid,scan,coil);
     if(live&&mst.stats.al%10===0)addLog(ts,cid,fnName,src,dst,`Scan:${scan} Coil:${coil}`);
@@ -1421,6 +1484,7 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
   // ── LIFT RUNTIME (FN=0x0C) — FlyerFrame: 20 bytes ──
   else if(fn===0x0C&&data.length>=14&&def.hasLifts){
     mst.stats.runtime++;
+    mst.snap.lifts[src]=data.slice();   // remember for re-render
     if(live) updateLiftUI(src, data);
     const tpos=((data[0]<<8)|data[1])/100, ppos=((data[2]<<8)|data[3])/100;
     const rpm=(data[4]<<8)|data[5], ca=((data[10]<<8)|data[11])*CURR_GAIN;
@@ -1579,26 +1643,47 @@ function loadFile(event){
       if(m){const rawId=parseInt(m[2],16);const b0=rawId&0xFF,b1=(rawId>>8)&0xFF,b2=(rawId>>16)&0xFF,b3=(rawId>>24)&0xFF;const canId=(b0<<24)|(b1<<16)|(b2<<8)|b3;const fn=(canId>>16)&0xFF,dst=(canId>>8)&0xFF,src=canId&0xFF;const dlc=parseInt(m[3]),nb=CANFD_DLC[dlc]||dlc;const data=m[4].trim().split(/\s+/).filter(x=>/^[0-9A-Fa-f]{1,2}$/.test(x)).slice(0,nb).map(x=>parseInt(x,16));frames.push({ts:m[1],can_id:`0x${canId.toString(16).toUpperCase().padStart(8,'0')}`,fn,src,dst,dlc,nb,raw_hex:m[4].trim(),data});}
     }
     if(frames.length===0){setFileNote(true,'No valid frames found in '+file.name);showToast('No frames found — check file format','err');return;}
-    const mst=machineState[mid];
-    for(const f of frames){
-      const sn=ADDR_MAP[f.src]||`0x${f.src.toString(16).padStart(2,'0')}`,dn=ADDR_MAP[f.dst]||`0x${f.dst.toString(16).padStart(2,'0')}`;
-      mst.rawLines.push(`${f.ts} | ${f.can_id} | FN:0x${f.fn.toString(16).toUpperCase().padStart(2,'0')} SRC:0x${f.src.toString(16).toUpperCase().padStart(2,'0')} DST:0x${f.dst.toString(16).toUpperCase().padStart(2,'0')} | DLC_code:${f.dlc} Bytes:${f.nb} | ${f.raw_hex}`);
-      mst.csvRows.push(buildCsvRow(mid,f.fn,f.src,sn,f.dst,dn,f.dlc,f.nb,f.raw_hex,f.data,f.ts));
-    }
-    document.getElementById('btn-dl-txt').style.display='flex';
-    document.getElementById('btn-dl-csv').style.display='flex';
-    let idx=0;
-    function chunk(){
-      const end=Math.min(idx+200,frames.length);
-      for(;idx<end;idx++){const f=frames[idx];decodeFrame(mid,f.fn,f.src,f.dst,f.data,f.ts,f.can_id);}
-      const pct=Math.round(idx/frames.length*100);
-      setFileNote(true,`${file.name} — ${frames.length} frames — ${pct}%`);
-      if(idx<frames.length){simTimer=setTimeout(chunk,0);}
-      else{setFileNote(true,`${file.name} — ${frames.length} frames decoded`);showToast(`Loaded ${frames.length} frames from ${file.name}`);}
-    }
-    chunk();
+    // remember the parsed frames so this machine's log can be replayed
+    machineState[mid].loadedFrames=frames;
+    machineState[mid].loadedName=file.name;
+    playLoaded(mid, frames, file.name);
   };
   reader.readAsText(file);
+}
+
+// decode a set of parsed frames into a machine (used by load + replay)
+function playLoaded(mid, frames, name){
+  const mst=machineState[mid];
+  for(const f of frames){
+    const sn=ADDR_MAP[f.src]||`0x${f.src.toString(16).padStart(2,'0')}`,dn=ADDR_MAP[f.dst]||`0x${f.dst.toString(16).padStart(2,'0')}`;
+    mst.rawLines.push(`${f.ts} | ${f.can_id} | FN:0x${f.fn.toString(16).toUpperCase().padStart(2,'0')} SRC:0x${f.src.toString(16).toUpperCase().padStart(2,'0')} DST:0x${f.dst.toString(16).toUpperCase().padStart(2,'0')} | DLC_code:${f.dlc} Bytes:${f.nb} | ${f.raw_hex}`);
+    mst.csvRows.push(buildCsvRow(mid,f.fn,f.src,sn,f.dst,dn,f.dlc,f.nb,f.raw_hex,f.data,f.ts));
+  }
+  document.getElementById('btn-dl-txt').style.display='flex';
+  document.getElementById('btn-dl-csv').style.display='flex';
+  document.getElementById('btn-replay').style.display='flex';
+  let idx=0;
+  function chunk(){
+    if(mid!==activeMachine){return;}  // user switched away mid-replay
+    const end=Math.min(idx+200,frames.length);
+    for(;idx<end;idx++){const f=frames[idx];decodeFrame(mid,f.fn,f.src,f.dst,f.data,f.ts,f.can_id);}
+    const pct=Math.round(idx/frames.length*100);
+    setFileNote(true,`${name} — ${frames.length} frames — ${pct}%`);
+    if(idx<frames.length){simTimer=setTimeout(chunk,0);}
+    else{setFileNote(true,`${name} — ${frames.length} frames decoded`);showToast(`Loaded ${frames.length} frames from ${name}`);}
+  }
+  chunk();
+}
+
+function replayLoaded(){
+  const mst=machineState[activeMachine];
+  if(!mst.loadedFrames||!mst.loadedFrames.length){showToast('No log loaded on this machine to replay','err');return;}
+  const frames=mst.loadedFrames, name=mst.loadedName||'log';
+  if(simTimer){clearTimeout(simTimer);simTimer=null;}
+  clearAll();                                          // clearAll wipes the machine state...
+  machineState[activeMachine].loadedFrames=frames;     // ...so re-attach the frames
+  machineState[activeMachine].loadedName=name;
+  playLoaded(activeMachine, frames, name);
 }
 
 // ── DOWNLOADS ──
@@ -1652,6 +1737,7 @@ function clearAll(){
   machineState[activeMachine]=makeMachineState();
   document.getElementById('log-container').innerHTML='';
   setFileNote(false);
+  ['btn-dl-txt','btn-dl-csv','btn-replay'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display='none';});
   updateKPI(machineState[activeMachine]);
   ['fr','br','cr','m4','m5','m6','m7','m8'].forEach(p=>{
     ['trpm','prpm','pwm','curr','volt','pwr'].forEach(k=>setVal(p+'-'+k,'—'));
