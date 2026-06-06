@@ -32,6 +32,9 @@ RELAY_URL  = os.environ.get('RELAY_URL',  'wss://machine-log-viewer-kcx3.onrende
 FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')
 HOST       = os.environ.get('CAN_HOST',   '192.168.1.125')
 LOG_DIR    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+# Google Drive auto-upload (via rclone). Empty DRIVE_FOLDER_ID = disabled.
+RCLONE          = os.environ.get('RCLONE', 'rclone')
+DRIVE_FOLDER_ID = os.environ.get('DRIVE_FOLDER_ID', '')
 
 MACHINES = {1: 1001, 2: 2001, 3: 3001, 4: 4001}
 MACHINE_NAME = {1: 'DrawFrame', 2: 'BlowCard', 3: 'FlyerFrame', 4: 'RingFrame'}
@@ -129,15 +132,21 @@ def record_start():
     print(f"[REC] started — session {_record_id}")
 
 def record_stop():
+    """Close this session's files; return their paths (to upload to Drive)."""
     global RECORDING
     if not RECORDING:
-        return
+        return []
     RECORDING = False
+    paths = []
     for key in list(_logfiles):
-        try: _logfiles[key]['fh'].close()
+        e = _logfiles[key]
+        try: e['fh'].close()
         except Exception: pass
+        if e.get('path'):
+            paths.append(e['path'])
         del _logfiles[key]
     print("[REC] stopped — session saved")
+    return paths
 
 def _log_write(mid, kind, line, header=None):
     if not RECORDING or not _record_id:
@@ -154,10 +163,30 @@ def _log_write(mid, kind, line, header=None):
         fh = open(path, 'a', encoding='utf-8')
         if new and header:
             fh.write(header)
-        _logfiles[key] = {'session': _record_id, 'fh': fh}
+        _logfiles[key] = {'session': _record_id, 'fh': fh, 'path': path}
         cur = _logfiles[key]
     cur['fh'].write(line)
     cur['fh'].flush()
+
+async def upload_to_drive(paths):
+    """Upload finished session files to the Google Drive folder via rclone."""
+    if not DRIVE_FOLDER_ID or not paths:
+        return
+    dest = f"gdrive,root_folder_id={DRIVE_FOLDER_ID}:"
+    for p in paths:
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                RCLONE, 'copyto', p, dest + os.path.basename(p),
+                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE)
+            _, err = await proc.communicate()
+            if proc.returncode == 0:
+                print(f"[DRIVE] uploaded {os.path.basename(p)}")
+            else:
+                print(f"[DRIVE] upload failed {os.path.basename(p)}: {(err or b'').decode(errors='ignore')[:150]}")
+        except FileNotFoundError:
+            print(f"[DRIVE] rclone not found at '{RCLONE}' — set RCLONE path"); return
+        except Exception as e:
+            print(f"[DRIVE] error: {e}")
 
 
 async def read_machine(mid, port, relay):
@@ -293,7 +322,9 @@ async def recv_control(relay):
             elif t == 'record_start':
                 record_start()
             elif t == 'record_stop':
-                record_stop()
+                paths = record_stop()
+                if paths:
+                    asyncio.create_task(upload_to_drive(paths))   # upload session to Drive
         elif m.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
             break
 
