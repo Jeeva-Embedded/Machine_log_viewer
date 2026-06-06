@@ -35,6 +35,25 @@ LOG_DIR    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 # Google Drive auto-upload (via rclone). Empty DRIVE_FOLDER_ID = disabled.
 RCLONE          = os.environ.get('RCLONE', 'rclone')
 DRIVE_FOLDER_ID = os.environ.get('DRIVE_FOLDER_ID', '')
+# a folder set from the website is persisted here and overrides the env value
+_DRIVE_CFG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'drive_folder.txt')
+try:
+    if os.path.exists(_DRIVE_CFG):
+        _saved = open(_DRIVE_CFG, encoding='utf-8').read().strip()
+        if _saved:
+            DRIVE_FOLDER_ID = _saved
+except Exception:
+    pass
+
+def set_drive_folder(fid):
+    """Update + persist the Google Drive target folder (called from the website)."""
+    global DRIVE_FOLDER_ID
+    DRIVE_FOLDER_ID = (fid or '').strip()
+    try:
+        open(_DRIVE_CFG, 'w', encoding='utf-8').write(DRIVE_FOLDER_ID)
+    except Exception:
+        pass
+    print(f"[DRIVE] target folder set to: {DRIVE_FOLDER_ID or '(none)'}")
 
 MACHINES = {1: 1001, 2: 2001, 3: 3001, 4: 4001}
 MACHINE_NAME = {1: 'DrawFrame', 2: 'BlowCard', 3: 'FlyerFrame', 4: 'RingFrame'}
@@ -325,6 +344,8 @@ async def recv_control(relay):
                 paths = record_stop()
                 if paths:
                     asyncio.create_task(upload_to_drive(paths))   # upload session to Drive
+            elif t == 'set_drive_folder':
+                set_drive_folder(j.get('folder_id', ''))
         elif m.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
             break
 

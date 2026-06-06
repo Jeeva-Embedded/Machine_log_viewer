@@ -1038,6 +1038,15 @@ input,select{font-family:inherit;font-size:13px;}
       </div>
     </div>
     <div class="modal-body" style="overflow:auto;">
+      <!-- Google Drive folder: where the agent uploads each session's raw+csv -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+        <span style="font-size:12px;font-weight:700;color:var(--text);">📁 Google Drive folder:</span>
+        <input id="drive-folder-input" placeholder="paste Drive folder link or ID"
+          style="flex:1;min-width:220px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;">
+        <button class="btn btn-primary btn-sm" onclick="saveDriveFolder()">Save</button>
+        <a id="drive-folder-link" href="#" target="_blank" class="btn btn-outline btn-sm" style="display:none;">↗ Open folder</a>
+        <div style="flex-basis:100%;font-size:11px;color:var(--muted);">Each Connect → Disconnect session's RAW + CSV is auto‑uploaded here.</div>
+      </div>
       <div id="logs-table-wrap"><div class="la-empty" style="padding:20px;color:var(--muted);">Loading…</div></div>
     </div>
     <div class="modal-footer">Each agent session (connect → disconnect) saves one RAW .txt and one decoded .csv per machine.</div>
@@ -1771,8 +1780,37 @@ function fmtSession(s){ // "20260606-093000" -> "2026-06-06  09:30:00"
   const m=/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(s);
   return m?`${m[1]}-${m[2]}-${m[3]}  ${m[4]}:${m[5]}:${m[6]}`:s;
 }
-function openLogsView(){ document.getElementById('logs-modal').classList.add('open'); loadLogsTable(); }
+function openLogsView(){ document.getElementById('logs-modal').classList.add('open'); loadDriveFolder(); loadLogsTable(); }
 function closeLogsView(){ document.getElementById('logs-modal').classList.remove('open'); }
+
+// ── Google Drive folder editor ──
+const DRIVE_FOLDER_DEFAULT='1b4HZMG3F55Lw7wKslH93ZgvmoF0YYXxA';
+function extractFolderId(s){
+  s=(s||'').trim();
+  const m=s.match(/folders\/([A-Za-z0-9_-]+)/);
+  if(m) return m[1];
+  if(/^[A-Za-z0-9_-]{10,}$/.test(s)) return s;   // raw id
+  return '';
+}
+function updateDriveFolderLink(id){
+  const a=document.getElementById('drive-folder-link');
+  if(id){ a.href='https://drive.google.com/drive/folders/'+id; a.style.display='inline-flex'; }
+  else a.style.display='none';
+}
+function loadDriveFolder(){
+  const id=localStorage.getItem('driveFolderId')||DRIVE_FOLDER_DEFAULT;
+  document.getElementById('drive-folder-input').value=id;
+  updateDriveFolderLink(id);
+}
+function saveDriveFolder(){
+  const id=extractFolderId(document.getElementById('drive-folder-input').value);
+  if(!id){ showToast('Enter a valid Drive folder link or ID','err'); return; }
+  localStorage.setItem('driveFolderId', id);
+  document.getElementById('drive-folder-input').value=id;
+  updateDriveFolderLink(id);
+  if(ws && ws.readyState===1){ ws.send(JSON.stringify({type:'set_drive_folder', folder_id:id})); showToast('Drive folder updated — logs will upload here'); }
+  else { showToast('Saved. Click Connect Live to apply it on the agent.'); }
+}
 async function loadLogsTable(){
   const box=document.getElementById('logs-table-wrap');
   if(location.protocol==='file:'){ box.innerHTML='<div class="la-empty" style="padding:20px;color:var(--muted);">Open via the website (not file://) to see saved logs.</div>'; return; }

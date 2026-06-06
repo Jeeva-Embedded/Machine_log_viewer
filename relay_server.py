@@ -148,7 +148,15 @@ async def view_handler(request):
             pass
     try:
         async for msg in ws:
-            if msg.type in (WSMsgType.CLOSE, WSMsgType.ERROR):
+            if msg.type == WSMsgType.TEXT:
+                # browser -> relay control (e.g. set Google Drive folder) -> forward to agent
+                try:
+                    j = json.loads(msg.data)
+                    if j.get('type') == 'set_drive_folder' and agent_ws is not None:
+                        await agent_ws.send_str(msg.data)
+                except Exception:
+                    pass
+            elif msg.type in (WSMsgType.CLOSE, WSMsgType.ERROR):
                 break
     finally:
         viewers.discard(ws)

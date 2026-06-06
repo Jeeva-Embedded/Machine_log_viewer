@@ -12,6 +12,8 @@ proxy_err.txt
 
 # saved CAN logs (live on the laptop only)
 logs/
+# website-set Google Drive folder (per-laptop runtime config)
+drive_folder.txt
 
 # python
 __pycache__/
