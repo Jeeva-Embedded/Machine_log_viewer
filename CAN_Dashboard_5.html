@@ -558,82 +558,18 @@ input,select{font-family:inherit;font-size:13px;}
       </div>
     </div>
 
-    <!-- LIFT MOTORS — FlyerFrame only -->
-    <div id="lift-panel" style="display:none;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">Lift Motors</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-
-        <!-- LEFT LIFT -->
-        <div class="motor-card" id="card-ll">
-          <div class="motor-card-header">
-            <div class="motor-card-title"><div class="motor-card-dot"></div>Left Lift</div>
-            <span class="motor-state-badge idle" id="state-ll">IDLE</span>
-          </div>
-          <div class="motor-card-body">
-            <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
-              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="ll-tpos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="ll-ppos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="ll-rpm">—</div></div>
-              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="ll-curr">—<span class="metric-unit">A</span></div></div>
-              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="ll-volt">—<span class="metric-unit">V</span></div></div>
-              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="ll-dir">—</div></div>
-            </div>
-            <div class="temp-pair">
-              <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div>
-                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="ll-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="ll-fet">—</div><div class="temp-val-unit">°C</div></div>
-                </div></div>
-              <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div>
-                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="ll-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="ll-mot">—</div><div class="temp-val-unit">°C</div></div>
-                </div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT LIFT -->
-        <div class="motor-card" id="card-rl">
-          <div class="motor-card-header">
-            <div class="motor-card-title"><div class="motor-card-dot"></div>Right Lift</div>
-            <span class="motor-state-badge idle" id="state-rl">IDLE</span>
-          </div>
-          <div class="motor-card-body">
-            <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
-              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="rl-tpos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="rl-ppos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="rl-rpm">—</div></div>
-              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="rl-curr">—<span class="metric-unit">A</span></div></div>
-              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="rl-volt">—<span class="metric-unit">V</span></div></div>
-              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="rl-dir">—</div></div>
-            </div>
-            <div class="temp-pair">
-              <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div>
-                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="rl-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="rl-fet">—</div><div class="temp-val-unit">°C</div></div>
-                </div></div>
-              <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div>
-                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="rl-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="rl-mot">—</div><div class="temp-val-unit">°C</div></div>
-                </div></div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div><!-- end lift-panel -->
-
     <!-- SETTINGS -->
     <div class="settings-panel">
       <div class="settings-panel-title">Machine &amp; Motor Setup</div>
-      <div class="settings-grid">
-        <div>
-          <!-- DrawFrame-only: delivery/draft/AL — hidden for other machines -->
-          <div id="settings-delivery-section">
+      <!-- DrawFrame-only: machine + AL settings -->
+      <div id="settings-df-section" style="display:none;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <div class="settings-grid">
+          <div>
             <div class="settings-col-title">Machine</div>
             <div class="setting-row"><span class="setting-key">Delivery</span><span class="setting-val" id="s-delivery">—</span></div>
             <div class="setting-row"><span class="setting-key">Draft</span><span class="setting-val" id="s-draft">—</span></div>
           </div>
-          <div id="settings-al-section" style="margin-top:12px;">
+          <div>
             <div class="settings-col-title">AL Settings</div>
             <div class="setting-row"><span class="setting-key">Kp</span><span class="setting-val" id="al-kp">—</span></div>
             <div class="setting-row"><span class="setting-key">Sliver N+1</span><span class="setting-val" id="al-sn1">—</span></div>
@@ -642,23 +578,9 @@ input,select{font-family:inherit;font-size:13px;}
             <div class="setting-row"><span class="setting-key">Target g/m</span><span class="setting-val" id="al-tgt">—</span></div>
           </div>
         </div>
-        <div>
-          <div class="settings-col-title" id="su-col-fr">Front Roller</div>
-          <div class="setting-row"><span class="setting-key">Set RPM</span><span class="setting-val" id="su-fr-rpm">—</span></div>
-          <div class="setting-row"><span class="setting-key">Ramp Up</span><span class="setting-val" id="su-fr-rut">—</span></div>
-          <div class="setting-row"><span class="setting-key">Ramp Down</span><span class="setting-val" id="su-fr-rdt">—</span></div>
-          <div class="settings-col-title" id="su-col-br" style="margin-top:12px;">Back Roller</div>
-          <div class="setting-row"><span class="setting-key">Set RPM</span><span class="setting-val" id="su-br-rpm">—</span></div>
-          <div class="setting-row"><span class="setting-key">Ramp Up</span><span class="setting-val" id="su-br-rut">—</span></div>
-          <div class="setting-row"><span class="setting-key">Ramp Down</span><span class="setting-val" id="su-br-rdt">—</span></div>
-        </div>
-        <div>
-          <div class="settings-col-title" id="su-col-cr">Creel</div>
-          <div class="setting-row"><span class="setting-key">Set RPM</span><span class="setting-val" id="su-cr-rpm">—</span></div>
-          <div class="setting-row"><span class="setting-key">Ramp Up</span><span class="setting-val" id="su-cr-rut">—</span></div>
-          <div class="setting-row"><span class="setting-key">Ramp Down</span><span class="setting-val" id="su-cr-rdt">—</span></div>
-        </div>
       </div>
+      <!-- per-motor RUT / RDT / RPM — built per machine by renderSetup() -->
+      <div class="settings-grid" id="setup-motors-grid"></div>
 
       <!-- FlyerFrame-only: BT params + Lift setup -->
       <div id="settings-flyer-section" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
@@ -1006,6 +928,70 @@ input,select{font-family:inherit;font-size:13px;}
       </div>
     </div>
 
+    <!-- LIFT MOTORS — FlyerFrame only -->
+    <div id="lift-panel" style="display:none;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">Lift Motors</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <!-- LEFT LIFT -->
+        <div class="motor-card" id="card-ll">
+          <div class="motor-card-header">
+            <div class="motor-card-title"><div class="motor-card-dot"></div>Left Lift</div>
+            <span class="motor-state-badge idle" id="state-ll">IDLE</span>
+          </div>
+          <div class="motor-card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="ll-tpos">—<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="ll-ppos">—<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="ll-rpm">—</div></div>
+              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="ll-curr">—<span class="metric-unit">A</span></div></div>
+              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="ll-volt">—<span class="metric-unit">V</span></div></div>
+              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="ll-dir">—</div></div>
+            </div>
+            <div class="temp-pair" onclick="openModal('LL','temp')" title="Click to view temperature chart" style="cursor:pointer">
+              <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div>
+                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="ll-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
+                  <div class="temp-center"><div class="temp-val-big" id="ll-fet">—</div><div class="temp-val-unit">°C</div></div>
+                </div></div>
+              <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div>
+                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="ll-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
+                  <div class="temp-center"><div class="temp-val-big" id="ll-mot">—</div><div class="temp-val-unit">°C</div></div>
+                </div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT LIFT -->
+        <div class="motor-card" id="card-rl">
+          <div class="motor-card-header">
+            <div class="motor-card-title"><div class="motor-card-dot"></div>Right Lift</div>
+            <span class="motor-state-badge idle" id="state-rl">IDLE</span>
+          </div>
+          <div class="motor-card-body">
+            <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="rl-tpos">—<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="rl-ppos">—<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="rl-rpm">—</div></div>
+              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="rl-curr">—<span class="metric-unit">A</span></div></div>
+              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="rl-volt">—<span class="metric-unit">V</span></div></div>
+              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="rl-dir">—</div></div>
+            </div>
+            <div class="temp-pair" onclick="openModal('RL','temp')" title="Click to view temperature chart" style="cursor:pointer">
+              <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div>
+                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="rl-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
+                  <div class="temp-center"><div class="temp-val-big" id="rl-fet">—</div><div class="temp-val-unit">°C</div></div>
+                </div></div>
+              <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div>
+                <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="rl-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
+                  <div class="temp-center"><div class="temp-val-big" id="rl-mot">—</div><div class="temp-val-unit">°C</div></div>
+                </div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- end lift-panel -->
+
     <!-- FRAME LOG -->
     <div class="log-panel">
       <div class="log-panel-header">
@@ -1131,12 +1117,13 @@ function makeMD(){return{labels:[],tRPM:[],pRPM:[],curr:[],fet:[],mot:[]};}
 function makeMachineState(){
   const cd={AL:{labels:[],scan:[],coil:[]}}, fh={AL:{labels:[],scan:[],coil:[]}};
   ALL_MOTOR_KEYS.forEach(k=>{cd[k]=makeMD();fh[k]=makeMD();});
+  ['LL','RL'].forEach(k=>{cd[k]=makeMD();fh[k]=makeMD();});   // lift temp history
   return{frameCount:0,alActive:false,stats:{runtime:0,al:0,cmd:0,err:0},rawLines:[],csvRows:[],
     motorStopTimer:{FR:null,BR:null,CR:null,M4:null,M5:null,M6:null,M7:null,M8:null},
     chartData:cd,fullHistory:fh,
     // snapshot of latest values per machine, so switching machines shows the
     // right data (and switching back restores it) instead of leaking values
-    snap:{motors:{}, lifts:{}, states:{}, al:null, logHtml:''}};
+    snap:{motors:{}, lifts:{}, states:{}, al:null, setup:{}, logHtml:''}};
 }
 const machineState={1:makeMachineState(),2:makeMachineState(),3:makeMachineState(),4:makeMachineState()};
 
@@ -1184,6 +1171,25 @@ function renderMachine(mid){
   document.getElementById('btn-replay').style.display = (mst.loadedFrames&&mst.loadedFrames.length)?'flex':'none';
 }
 
+// ── BUILD PER-MOTOR SETUP COLUMNS (Set RPM / Ramp Up / Ramp Down) ──
+function renderSetup(mid){
+  const def=MACHINE_DEFS[mid]||MACHINE_DEFS[1], mst=machineState[mid];
+  const order=['fr','br','cr'].concat(def.extraMotors||[]);
+  let html='';
+  order.forEach(p=>{
+    const nm=(def.motorNames&&def.motorNames[p])||p.toUpperCase();
+    const sv=(mst.snap.setup&&mst.snap.setup[p])||{};
+    const rpm=sv.rpm!=null?sv.rpm:'—', rut=sv.rut!=null?sv.rut+'s':'—', rdt=sv.rdt!=null?sv.rdt+'s':'—';
+    html+=`<div>
+      <div class="settings-col-title">${nm}</div>
+      <div class="setting-row"><span class="setting-key">Set RPM</span><span class="setting-val" id="su-${p}-rpm">${rpm}</span></div>
+      <div class="setting-row"><span class="setting-key">Ramp Up</span><span class="setting-val" id="su-${p}-rut">${rut}</span></div>
+      <div class="setting-row"><span class="setting-key">Ramp Down</span><span class="setting-val" id="su-${p}-rdt">${rdt}</span></div>
+    </div>`;
+  });
+  document.getElementById('setup-motors-grid').innerHTML=html;
+}
+
 // ── NAVIGATION ──
 function openMachine(mid){
   // save the log of the machine we're leaving
@@ -1204,14 +1210,11 @@ function openMachine(mid){
   document.querySelector('#card-fr .motor-card-title').innerHTML=`<div class="motor-card-dot"></div>${def.motorNames.fr}`;
   document.querySelector('#card-br .motor-card-title').innerHTML=`<div class="motor-card-dot"></div>${def.motorNames.br}`;
   document.querySelector('#card-cr .motor-card-title').innerHTML=`<div class="motor-card-dot"></div>${def.motorNames.cr}`;
-  // Settings column titles
-  document.getElementById('su-col-fr').textContent=def.setupLabels.fr;
-  document.getElementById('su-col-br').textContent=def.setupLabels.br;
-  document.getElementById('su-col-cr').textContent=def.setupLabels.cr;
+  // Build the per-motor setup columns for this machine
+  renderSetup(mid);
   // Show/hide DrawFrame-only sections
   const s=v=>v?'':'none';
-  document.getElementById('settings-delivery-section').style.display=s(def.hasAL);
-  document.getElementById('settings-al-section').style.display=s(def.hasAL);
+  document.getElementById('settings-df-section').style.display=s(def.hasAL);
   const alPanel=document.querySelector('.al-panel');if(alPanel)alPanel.style.display=s(def.hasAL);
   // Topbar AL pill — only for DrawFrame
   document.getElementById('pill-al').style.display=s(def.hasAL);
@@ -1299,7 +1302,7 @@ function pushChart(mid,key,tRPM,pRPM,curr,fet,mot){
   d.labels.push(ts);d.tRPM.push(tRPM);d.pRPM.push(pRPM);d.curr.push(curr);d.fet.push(fet);d.mot.push(mot);
   if(d.labels.length>MAX_PTS){d.labels.shift();d.tRPM.shift();d.pRPM.shift();d.curr.shift();d.fet.shift();d.mot.shift();}
   h.labels.push(ts);h.tRPM.push(tRPM);h.pRPM.push(pRPM);h.curr.push(curr);h.fet.push(fet);h.mot.push(mot);
-  if(mid!==activeMachine)return;
+  if(mid!==activeMachine||!charts[key])return;   // lifts have history but no card chart
   const cr=charts[key];
   cr.rpm.data.labels=d.labels;cr.rpm.data.datasets[0].data=d.tRPM;cr.rpm.data.datasets[1].data=d.pRPM;cr.rpm.update('none');
   cr.curr.data.labels=d.labels;cr.curr.data.datasets[0].data=d.curr;cr.curr.update('none');
@@ -1450,6 +1453,7 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
     mst.stats.cmd++;
     const rut=data[0],rdt=data[1],rpm=(data[2]<<8)|data[3];
     const k=def.motorMap[dst];
+    if(k) mst.snap.setup[k]={rut,rdt,rpm};   // remember for re-render
     if(k&&live){setVal('su-'+k+'-rut',rut+'s');flashSetting('su-'+k+'-rut');setVal('su-'+k+'-rdt',rdt+'s');flashSetting('su-'+k+'-rdt');setVal('su-'+k+'-rpm',rpm);flashSetting('su-'+k+'-rpm');}
     if(live)addLog(ts,cid,fnName,src,dst,`RUT:${rut}s RDT:${rdt}s RPM:${rpm}`);
   }
@@ -1482,6 +1486,8 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
   else if(fn===0x0C&&data.length>=14&&def.hasLifts){
     mst.stats.runtime++;
     mst.snap.lifts[src]=data.slice();   // remember for re-render
+    const P=src===0x04?'LL':src===0x05?'RL':null;
+    if(P) pushChart(mid,P,(data[4]<<8)|data[5],(data[4]<<8)|data[5],((data[10]<<8)|data[11])*CURR_GAIN,data[8],data[9]);
     if(live) updateLiftUI(src, data);
     const tpos=((data[0]<<8)|data[1])/100, ppos=((data[2]<<8)|data[3])/100;
     const rpm=(data[4]<<8)|data[5], ca=((data[10]<<8)|data[11])*CURR_GAIN;
@@ -1744,6 +1750,7 @@ function clearAll(){
     const st=document.getElementById('state-'+p);if(st){st.textContent='IDLE';st.className='motor-state-badge idle';}
   });
   setVal('al-scan','—');setVal('al-coil','—');setVal('al-ctr-val','—');
+  renderSetup(activeMachine);   // rebuild empty per-motor setup columns
   setALPill(false);const stEl=document.getElementById('state-al');if(stEl){stEl.textContent='INACTIVE';stEl.className='al-active-chip';}
   ALL_MOTOR_KEYS.forEach(k=>{if(!charts[k])return;charts[k].rpm.data.labels=[];charts[k].rpm.data.datasets.forEach(d=>d.data=[]);charts[k].rpm.update('none');charts[k].curr.data.labels=[];charts[k].curr.data.datasets.forEach(d=>d.data=[]);charts[k].curr.update('none');});
   charts.AL.data.labels=[];charts.AL.data.datasets.forEach(d=>d.data=[]);charts.AL.update('none');
@@ -1763,6 +1770,8 @@ function showToast(msg,type){
 // ── MODAL ──
 function motorLabel(key){
   if(key==='AL')return 'Auto Leveller';
+  if(key==='LL')return 'Left Lift';
+  if(key==='RL')return 'Right Lift';
   const def=MACHINE_DEFS[activeMachine]||MACHINE_DEFS[1];
   return (def.motorNames&&def.motorNames[key.toLowerCase()])||key;
 }
