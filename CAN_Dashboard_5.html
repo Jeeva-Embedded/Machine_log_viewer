@@ -1137,7 +1137,7 @@ const CURR_GAIN=0.00672,VOLT_GAIN=0.017,MAX_RPM=800,MAX_TEMP=100,MAX_PTS=60;
 const FN_MAP={0x01:'MotorState',0x02:'Error',0x07:'RunSetup',0x09:'RuntimeData',0x0A:'Diagnostics',0x0F:'ACK',0x1E:'AL_Sensor',0x1F:'AL_Setup',0x20:'ACK',0x24:'AL_Settings'};
 const ADDR_MAP={0x01:'MB',0x02:'FR',0x03:'BR',0x04:'CREEL',0x0A:'AL'};
 const MOTOR_STATE={0:'IDLE',1:'E-STOP',2:'RUNNING',3:'RAMP-DN',4:'CHG-RPM',5:'HOMING',6:'RESUME',7:'RESET',8:'ACK'};
-const CSV_HEADER="Timestamp,Machine,CAN_ID,FunctionID,FunctionName,Source_Addr,Source_Board,Dest_Addr,Dest_Board,DLC_Code,Bytes,Raw_Data,TargetRPM,PresentRPM,PWM,MosfetTemp_C,MotorTemp_C,CurrentADC,CurrentA,VoltageADC,VoltageV,Power_W,Command,ACK,RUT_RampUpTime_s,RDT_RampDownTime_s,Motor_RPM,Draft,Delivery_mMin,AL_Kp,AL_Sliver_N1,AL_Sliver_N,AL_Sliver_Nm1,AL_Target_gm,AL_Counter,AL_ScanningSensor,AL_CoilerSensor,ErrorCode";
+const CSV_HEADER="Timestamp,Millis,Machine,CAN_ID,FunctionID,FunctionName,Source_Addr,Source_Board,Dest_Addr,Dest_Board,DLC_Code,Bytes,Raw_Data,TargetRPM,PresentRPM,PWM,MosfetTemp_C,MotorTemp_C,CurrentADC,CurrentA,VoltageADC,VoltageV,Power_W,Command,ACK,RUT_RampUpTime_s,RDT_RampDownTime_s,Motor_RPM,Draft,Delivery_mMin,AL_Kp,AL_Sliver_N1,AL_Sliver_N,AL_Sliver_Nm1,AL_Target_gm,AL_Counter,AL_ScanningSensor,AL_CoilerSensor,ErrorCode";
 
 // ── STATE ──
 let ws=null,activeMachine=1,simTimer=null;
@@ -1592,8 +1592,9 @@ function updateKPI(mst){
 // ── CSV ──
 function buildCsvRow(mid,fn,src,sn,dst,dn,dlc,nb,raw_hex,data,ts){
   const MS={1:'EmergencyStop',2:'Start',3:'RampDownStop',4:'ChangeRPM',5:'Homing',6:'Resume',7:'Reset',8:'AckPresence'};
-  ts=(ts||'').split('.')[0];   // drop ms so Excel shows full date+time
-  let r={Timestamp:ts,Machine:'M'+mid,CAN_ID:'',FunctionID:`0x${fn.toString(16).toUpperCase().padStart(2,'0')}`,FunctionName:FN_MAP[fn]||`FN_0x${fn.toString(16)}`,Source_Addr:`0x${src.toString(16).toUpperCase().padStart(2,'0')}`,Source_Board:sn,Dest_Addr:`0x${dst.toString(16).toUpperCase().padStart(2,'0')}`,Dest_Board:dn,DLC_Code:dlc,Bytes:nb,Raw_Data:raw_hex,TargetRPM:'',PresentRPM:'',PWM:'',MosfetTemp_C:'',MotorTemp_C:'',CurrentADC:'',CurrentA:'',VoltageADC:'',VoltageV:'',Power_W:'',Command:'',ACK:'',RUT_RampUpTime_s:'',RDT_RampDownTime_s:'',Motor_RPM:'',Draft:'',Delivery_mMin:'',AL_Kp:'',AL_Sliver_N1:'',AL_Sliver_N:'',AL_Sliver_Nm1:'',AL_Target_gm:'',AL_Counter:'',AL_ScanningSensor:'',AL_CoilerSensor:'',ErrorCode:''};
+  const _ms=(ts||'').includes('.')?(ts||'').split('.')[1]:'';   // milliseconds in its own column
+  ts=(ts||'').split('.')[0];   // Timestamp without ms so Excel shows full date+time
+  let r={Timestamp:ts,Millis:_ms,Machine:'M'+mid,CAN_ID:'',FunctionID:`0x${fn.toString(16).toUpperCase().padStart(2,'0')}`,FunctionName:FN_MAP[fn]||`FN_0x${fn.toString(16)}`,Source_Addr:`0x${src.toString(16).toUpperCase().padStart(2,'0')}`,Source_Board:sn,Dest_Addr:`0x${dst.toString(16).toUpperCase().padStart(2,'0')}`,Dest_Board:dn,DLC_Code:dlc,Bytes:nb,Raw_Data:raw_hex,TargetRPM:'',PresentRPM:'',PWM:'',MosfetTemp_C:'',MotorTemp_C:'',CurrentADC:'',CurrentA:'',VoltageADC:'',VoltageV:'',Power_W:'',Command:'',ACK:'',RUT_RampUpTime_s:'',RDT_RampDownTime_s:'',Motor_RPM:'',Draft:'',Delivery_mMin:'',AL_Kp:'',AL_Sliver_N1:'',AL_Sliver_N:'',AL_Sliver_Nm1:'',AL_Target_gm:'',AL_Counter:'',AL_ScanningSensor:'',AL_CoilerSensor:'',ErrorCode:''};
   if(fn===0x09&&data.length>=12){const c=(data[8]<<8)|data[9],v=(data[10]<<8)|data[11],ca=c*CURR_GAIN,vv=v*VOLT_GAIN;Object.assign(r,{TargetRPM:(data[0]<<8)|data[1],PresentRPM:(data[2]<<8)|data[3],PWM:(data[4]<<8)|data[5],MosfetTemp_C:data[6],MotorTemp_C:data[7],CurrentADC:c,CurrentA:ca.toFixed(4),VoltageADC:v,VoltageV:vv.toFixed(3),Power_W:(ca*vv).toFixed(3)});}
   else if(fn===0x07&&data.length>=4)Object.assign(r,{RUT_RampUpTime_s:data[0],RDT_RampDownTime_s:data[1],Motor_RPM:(data[2]<<8)|data[3]});
   else if(fn===0x1F&&data.length>=4)Object.assign(r,{Draft:(((data[0]<<8)|data[1])/100).toFixed(2),Delivery_mMin:(data[2]<<8)|data[3]});
@@ -1602,7 +1603,7 @@ function buildCsvRow(mid,fn,src,sn,dst,dn,dlc,nb,raw_hex,data,ts){
   else if(fn===0x01&&data.length>=1)r.Command=MS[data[0]]||`0x${data[0].toString(16)}`;
   else if((fn===0x0F||fn===0x20)&&data.length>=1)r.ACK=data[0]===1?'OK':`0x${data[0].toString(16)}`;
   else if(fn===0x02&&data.length>=2)r.ErrorCode=`0x${((data[0]<<8)|data[1]).toString(16).toUpperCase().padStart(4,'0')}`;
-  const K=["Timestamp","Machine","CAN_ID","FunctionID","FunctionName","Source_Addr","Source_Board","Dest_Addr","Dest_Board","DLC_Code","Bytes","Raw_Data","TargetRPM","PresentRPM","PWM","MosfetTemp_C","MotorTemp_C","CurrentADC","CurrentA","VoltageADC","VoltageV","Power_W","Command","ACK","RUT_RampUpTime_s","RDT_RampDownTime_s","Motor_RPM","Draft","Delivery_mMin","AL_Kp","AL_Sliver_N1","AL_Sliver_N","AL_Sliver_Nm1","AL_Target_gm","AL_Counter","AL_ScanningSensor","AL_CoilerSensor","ErrorCode"];
+  const K=["Timestamp","Millis","Machine","CAN_ID","FunctionID","FunctionName","Source_Addr","Source_Board","Dest_Addr","Dest_Board","DLC_Code","Bytes","Raw_Data","TargetRPM","PresentRPM","PWM","MosfetTemp_C","MotorTemp_C","CurrentADC","CurrentA","VoltageADC","VoltageV","Power_W","Command","ACK","RUT_RampUpTime_s","RDT_RampDownTime_s","Motor_RPM","Draft","Delivery_mMin","AL_Kp","AL_Sliver_N1","AL_Sliver_N","AL_Sliver_Nm1","AL_Target_gm","AL_Counter","AL_ScanningSensor","AL_CoilerSensor","ErrorCode"];
   return K.map(k=>String(r[k]||'')).join(',');
 }
 
