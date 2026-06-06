@@ -172,7 +172,7 @@ input,select{font-family:inherit;font-size:13px;}
 .file-note.show{display:flex;}
 
 /* motor grid */
-.motor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+.motor-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px;}
 @media(max-width:1100px){.motor-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:700px){.motor-grid{grid-template-columns:1fr;}}
 
@@ -832,10 +832,8 @@ input,select{font-family:inherit;font-size:13px;}
         </div>
       </div>
 
-    </div><!-- end motor-grid (first 3) -->
 
-    <!-- EXTRA MOTOR CARDS m4-m8 — shown per machine -->
-    <div class="motor-grid" id="extra-motor-grid" style="display:none;margin-top:10px;">
+      <!-- EXTRA MOTOR CARDS m4-m8 — shown per machine (same grid, flow 2-per-row) -->
 
       <!-- m4 -->
       <div class="motor-card" id="card-m4" style="display:none">
@@ -1129,7 +1127,7 @@ const CSV_HEADER="Timestamp,Machine,CAN_ID,FunctionID,FunctionName,Source_Addr,S
 let ws=null,activeMachine=1,simTimer=null;
 let modalChart=null,modalKey=null,modalType=null,modalInterval=null;
 const ALL_MOTOR_KEYS=['FR','BR','CR','M4','M5','M6','M7','M8'];
-function makeMD(){return{labels:[],tRPM:[],pRPM:[],curr:[]};}
+function makeMD(){return{labels:[],tRPM:[],pRPM:[],curr:[],fet:[],mot:[]};}
 function makeMachineState(){
   const cd={AL:{labels:[],scan:[],coil:[]}}, fh={AL:{labels:[],scan:[],coil:[]}};
   ALL_MOTOR_KEYS.forEach(k=>{cd[k]=makeMD();fh[k]=makeMD();});
@@ -1236,7 +1234,6 @@ function openMachine(mid){
       document.getElementById('title-'+id).textContent=def.motorNames[id];
     }
   });
-  document.getElementById('extra-motor-grid').style.display=extraMotors.length>0?'':'none';
   // repaint this machine's own values/charts/log (prevents values leaking between machines)
   renderMachine(mid);
   // Auto-connect when served over the web (server.py / tunnel) so remote viewers
@@ -1296,12 +1293,12 @@ const charts={
   AL:makeALChart('chart-al')
 };
 
-function pushChart(mid,key,tRPM,pRPM,curr){
+function pushChart(mid,key,tRPM,pRPM,curr,fet,mot){
   const mst=machineState[mid],d=mst.chartData[key],h=mst.fullHistory[key];
   const ts=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  d.labels.push(ts);d.tRPM.push(tRPM);d.pRPM.push(pRPM);d.curr.push(curr);
-  if(d.labels.length>MAX_PTS){d.labels.shift();d.tRPM.shift();d.pRPM.shift();d.curr.shift();}
-  h.labels.push(ts);h.tRPM.push(tRPM);h.pRPM.push(pRPM);h.curr.push(curr);
+  d.labels.push(ts);d.tRPM.push(tRPM);d.pRPM.push(pRPM);d.curr.push(curr);d.fet.push(fet);d.mot.push(mot);
+  if(d.labels.length>MAX_PTS){d.labels.shift();d.tRPM.shift();d.pRPM.shift();d.curr.shift();d.fet.shift();d.mot.shift();}
+  h.labels.push(ts);h.tRPM.push(tRPM);h.pRPM.push(pRPM);h.curr.push(curr);h.fet.push(fet);h.mot.push(mot);
   if(mid!==activeMachine)return;
   const cr=charts[key];
   cr.rpm.data.labels=d.labels;cr.rpm.data.datasets[0].data=d.tRPM;cr.rpm.data.datasets[1].data=d.pRPM;cr.rpm.update('none');
@@ -1377,7 +1374,7 @@ function paintMotor(pfx,d){
 function updateMotorUI(mid,pfx,d){
   const mst=machineState[mid],KEY=pfx.toUpperCase();
   mst.snap.motors[pfx]=d;                                   // remember for re-render on machine switch
-  pushChart(mid,KEY,d.tRPM,d.pRPM,d.currADC*CURR_GAIN);     // stores history; paints chart only if active
+  pushChart(mid,KEY,d.tRPM,d.pRPM,d.currADC*CURR_GAIN,d.fet,d.mot);  // stores history; paints chart only if active
   if(mst.motorStopTimer[KEY]){clearTimeout(mst.motorStopTimer[KEY]);mst.motorStopTimer[KEY]=null;}
   if(mid===activeMachine) paintMotor(pfx,d);
 }
@@ -1764,11 +1761,17 @@ function showToast(msg,type){
 }
 
 // ── MODAL ──
+function motorLabel(key){
+  if(key==='AL')return 'Auto Leveller';
+  const def=MACHINE_DEFS[activeMachine]||MACHINE_DEFS[1];
+  return (def.motorNames&&def.motorNames[key.toLowerCase()])||key;
+}
 function syncModal(){
   if(!modalChart)return;
   const h=(modalKey==='AL')?machineState[activeMachine].fullHistory.AL:machineState[activeMachine].fullHistory[modalKey];
   if(modalType==='rpm'){modalChart.data.labels=h.labels;modalChart.data.datasets[0].data=h.tRPM;modalChart.data.datasets[1].data=h.pRPM;}
   else if(modalType==='curr'){modalChart.data.labels=h.labels;modalChart.data.datasets[0].data=h.curr;}
+  else if(modalType==='temp'){modalChart.data.labels=h.labels;modalChart.data.datasets[0].data=h.fet;modalChart.data.datasets[1].data=h.mot;}
   else{modalChart.data.labels=h.labels;modalChart.data.datasets[0].data=h.scan;modalChart.data.datasets[1].data=h.coil;}
   modalChart.update('none');
 }
@@ -1779,21 +1782,26 @@ function openModal(key,type){
   if(modalInterval){clearInterval(modalInterval);modalInterval=null;}
   modalKey=key;modalType=type;
   const h=(key==='AL')?machineState[activeMachine].fullHistory.AL:machineState[activeMachine].fullHistory[key];
+  const name=motorLabel(key);
   const G='rgba(221,227,234,0.8)';
   const zC={zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'},pan:{enabled:true,mode:'xy'}};
   let title,datasets,yCfg;
   if(type==='rpm'){
-    const cols={FR:['#2471a3','#7dba3a'],BR:['#7c3aed','#2471a3'],CR:['#c0392b','#d97706']}[key];
-    title=`${key} — Target vs Present RPM (${h.labels.length} pts)`;
+    const cols=({FR:['#2471a3','#7dba3a'],BR:['#7c3aed','#2471a3'],CR:['#c0392b','#d97706']}[key])||['#2471a3','#7dba3a'];
+    title=`${name} — Target vs Present RPM (${h.labels.length} pts)`;
     datasets=[{label:'Target RPM',data:h.tRPM,borderColor:cols[0],borderWidth:2,pointRadius:0,tension:0.3},{label:'Present RPM',data:h.pRPM,borderColor:cols[1],borderWidth:2,pointRadius:0,tension:0.3,borderDash:[5,3]}];
     yCfg={min:0,max:MAX_RPM,ticks:{color:cols[0],stepSize:100},title:{display:true,text:'RPM',color:'#5d6b7a'}};
   }else if(type==='curr'){
-    const col={FR:'#d97706',BR:'#7dba3a',CR:'#7c3aed'}[key];
-    title=`${key} — Current A (${h.labels.length} pts)`;
+    const col=({FR:'#d97706',BR:'#7dba3a',CR:'#7c3aed'}[key])||'#d97706';
+    title=`${name} — Current A (${h.labels.length} pts)`;
     datasets=[{label:'Current A',data:h.curr,borderColor:col,borderWidth:2,pointRadius:0,tension:0.3,fill:true,backgroundColor:col+'18'}];
     yCfg={min:0,ticks:{color:col},title:{display:true,text:'Amps',color:'#5d6b7a'}};
+  }else if(type==='temp'){
+    title=`${name} — Temperature (${h.labels.length} pts)`;
+    datasets=[{label:'MOSFET °C',data:h.fet,borderColor:'#f59e0b',borderWidth:2,pointRadius:0,tension:0.3},{label:'Motor °C',data:h.mot,borderColor:'#ef4444',borderWidth:2,pointRadius:0,tension:0.3}];
+    yCfg={min:0,max:MAX_TEMP,ticks:{color:'#ef4444',stepSize:10},title:{display:true,text:'°C',color:'#5d6b7a'}};
   }else{
-    title=`Auto Leveller Sensor (${h.labels.length} pts)`;
+    title=`${name} Sensor (${h.labels.length} pts)`;
     datasets=[{label:'Scanning',data:h.scan,borderColor:'#7c3aed',borderWidth:2,pointRadius:0,tension:0.3},{label:'Coiler',data:h.coil,borderColor:'#ec4899',borderWidth:2,pointRadius:0,tension:0.3}];
     yCfg={ticks:{color:'#7c3aed'},title:{display:true,text:'ADC',color:'#5d6b7a'}};
   }
@@ -1816,6 +1824,16 @@ function closeModal(){
   modalKey=null;modalType=null;
 }
 function resetModalZoom(){if(modalChart)modalChart.resetZoom();}
+
+// Clicking a motor's temperature gauges opens the temperature chart
+document.querySelectorAll('#view-dash .motor-card .temp-pair').forEach(tp=>{
+  const card=tp.closest('.motor-card'); if(!card)return;
+  const id=card.id.replace('card-','');       // fr,br,cr,m4..m8,ll,rl
+  if(id==='ll'||id==='rl')return;             // lifts have no temp history chart
+  tp.style.cursor='pointer';
+  tp.title='Click to view temperature chart';
+  tp.addEventListener('click',()=>openModal(id.toUpperCase(),'temp'));
+});
 </script>
 </body>
 </html>
