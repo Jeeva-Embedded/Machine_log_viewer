@@ -28,3 +28,26 @@ UT-6504-FD CAN-FD-to-Ethernet converter, viewable from anywhere.
 3. On the laptop: set `RELAY_URL` and `FEED_TOKEN` in `agent.py`, then
    `pip install aiohttp && python agent.py`.
 4. Open the Render URL from anywhere → pick a machine → live data.
+
+## Why this stack (Python + single-file HTML)
+Chosen for **one converter, a few viewers, fast iteration, zero budget, and a
+non-web-dev owner**:
+- Python handles raw TCP + CAN byte decoding cleanly and runs with just
+  `pip install aiohttp` (no compiler/toolchain).
+- A single HTML file opens by double-click — no build step, no `npm`, no bundler.
+- Render hosts it free; Chart.js comes from a CDN.
+
+It is the right tool for *now*, not necessarily for scale.
+
+## Upgrade path (when/if this grows)
+Trigger points and the recommended upgrade for each:
+
+| When you hit this | Upgrade to |
+|---|---|
+| Agent must run 24/7 and you don't want Python installed on the gateway PC | **Rewrite `agent.py` in Go** → a single `.exe` that auto-starts on boot, no runtime to install, very robust concurrency. The CAN frame format and the JSON it sends to the relay stay identical, so `relay_server.py` and the dashboard need **no changes**. |
+| The dashboard (`CAN_Dashboard_5.html`, ~2000 lines) gets hard to maintain | Move the UI to a component framework (**Svelte** preferred for small bundle / no heavy tooling, or React). Keep the same relay `/ws` JSON contract. |
+| Many machines / many customers / persistent history / alerting | Adopt a standard **IoT stack**: agent publishes to **MQTT**, visualize in **Grafana** (or use ThingsBoard / Node-RED). Replaces the custom relay + dashboard with battle-tested infra. |
+| Need a permanent fixed URL / no laptop at all | Either a **named Cloudflare tunnel** (permanent URL, laptop still runs the agent) or **Option B**: put the converter in *TCP-client* mode dialing a small **VPS** with a public IP (no laptop needed — needs a ~$5/mo VPS + converter reconfig). |
+
+**Order of priority if productizing:** Go agent first (reliability), then MQTT+Grafana
+(scale), then a UI framework (maintainability).
