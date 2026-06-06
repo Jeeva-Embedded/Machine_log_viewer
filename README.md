@@ -90,9 +90,30 @@ How it works / what's needed:
 - **Security:** restrict the listener to the converter's source, or add a simple
   handshake/token, since a raw public TCP port is otherwise open.
 
-Trade-off vs Phase 1: Phase 2 is hands-off (no laptop) and "always on", but costs a
-small VPS fee and requires reconfiguring the converter. Phase 1 stays as the free
-fallback.
+Trade-off vs Phase 1: Phase 2 is hands-off (no laptop) and "always on", but needs a
+cloud host with a public IP and requires reconfiguring the converter. Phase 1 stays
+as the free fallback.
+
+#### Free hosting options for the Phase 2 server
+The server must have a **real public IP and an open raw TCP port** (the converter
+dials in with raw TCP — so Render / Cloudflare / ngrok do *not* fit the no-laptop
+case). These free clouds do:
+
+| Option | Free? | Notes |
+|---|---|---|
+| **Oracle Cloud "Always Free"** ⭐ recommended | Free forever | Real VM (ARM Ampere up to 4 CPU/24 GB, or small AMD), 10 TB/mo egress, open any port via the security list. Best fit. |
+| **Google Cloud "Always Free"** | Free forever | 1× `e2-micro` VM in US regions, ~1 GB/mo egress (fine for one CAN stream + a few viewers). |
+| **AWS / Azure free tier** | Free for 12 months | `t3.micro` etc.; starts charging after a year. |
+| **Fly.io** | Small free allowance | Supports raw TCP + public IP; light use only. |
+
+Notes:
+- **Card-for-verification caveat:** Oracle / Google / AWS require a credit or debit
+  card at signup for identity verification only — **not charged** within Always-Free
+  limits. There is no trustworthy "public-TCP, no-card, forever-free" host for this.
+- **Data is tiny:** one CAN stream is a few GB/month at most — well inside every free
+  tier (Oracle's 10 TB/mo is far more than needed).
+- Tools like ngrok/Cloudflare Tunnel avoid the card but must run on a local machine,
+  which re-introduces the laptop and defeats Phase 2's purpose.
 
 ### Phase 2+ (scale, from the upgrade table above)
 Go agent/listener (single binary), MQTT + Grafana for many machines, optional UI
