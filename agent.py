@@ -20,8 +20,13 @@ import socket
 import json
 import os
 import base64
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import aiohttp
+
+# Always log in IST (UTC+5:30), regardless of where the agent/VPS runs
+IST = timezone(timedelta(hours=5, minutes=30))
+def now_ist():
+    return datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]   # full date+time+ms, IST
 
 RELAY_URL  = os.environ.get('RELAY_URL',  'wss://machine-log-viewer-kcx3.onrender.com/feed')
 FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')
@@ -81,6 +86,7 @@ def decode_id(raw_id):
 
 def csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n, dlc, nb, data_hex, data):
     # 38 columns — decodes ALL frame types (runtime, motor state, run-setup, AL setup/settings/sensor, ACK, error)
+    ts = ts.split('.')[0]   # drop milliseconds so Excel shows full date+time (not mm:ss)
     c = [ts, f'M{mid}', f'0x{can_id:08X}', f'0x{fn:02X}', fn_n,
          f'0x{src:02X}', src_n, f'0x{dst:02X}', dst_n, str(dlc), str(nb), data_hex] + [''] * 26
     if fn == 0x09 and len(data) >= 12:                 # Runtime Data
@@ -117,7 +123,7 @@ _record_id = None
 
 def record_start():
     global RECORDING, _record_id
-    _record_id = datetime.now().strftime('%Y%m%d-%H%M%S')
+    _record_id = datetime.now(IST).strftime('%Y%m%d-%H%M%S')
     RECORDING = True
     print(f"[REC] started — session {_record_id}")
 
@@ -181,7 +187,7 @@ async def read_machine(mid, port, relay):
                     buf += chunk
                     while len(buf) >= 69:
                         frame = buf[:69]; buf = buf[69:]
-                        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                        ts = now_ist()
                         dlc_code = frame[0] & 0x0F
                         nb = CANFD_DLC.get(dlc_code, 0)
                         raw_id = int.from_bytes(frame[1:5], 'little')
