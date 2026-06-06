@@ -116,60 +116,67 @@ async def read_machine(mid, port, relay):
     addr_map = MACHINE_ADDR.get(mid, MACHINE_ADDR[1])
     fn_map   = MACHINE_FN.get(mid, MACHINE_FN[1])
     loop = asyncio.get_event_loop()
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setblocking(False)   # non-blocking connect so an offline converter can't freeze the event loop
-    try:
-        await asyncio.wait_for(loop.sock_connect(sock, (HOST, port)), timeout=5)
-        print(f"[M{mid}] reading {HOST}:{port}")
-    except Exception as e:
-        print(f"[M{mid}] offline ({HOST}:{port}) — {e}")
-        try: await relay.send_str(json.dumps({'machine': mid, 'event': 'offline'}))
-        except Exception: pass
-        sock.close(); return
-
-    buf = b''
-    try:
-        while not relay.closed:
-            try:
-                chunk = await asyncio.wait_for(loop.sock_recv(sock, 8192), timeout=0.05)
-                if not chunk: break
-                buf += chunk
-                while len(buf) >= 69:
-                    frame = buf[:69]; buf = buf[69:]
-                    ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-                    dlc_code = frame[0] & 0x0F
-                    nb = CANFD_DLC.get(dlc_code, 0)
-                    raw_id = int.from_bytes(frame[1:5], 'little')
-                    can_id, fn, dst, src = decode_id(raw_id)
-                    data = list(frame[5:5 + nb])
-                    data_hex = ' '.join(f'{b:02X}' for b in data)
-                    fn_n  = fn_map.get(fn, f'FN_0x{fn:02X}')
-                    src_n = addr_map.get(src, f'0x{src:02X}')
-                    dst_n = addr_map.get(dst, f'0x{dst:02X}')
-                    # 1) push live to relay
-                    msg = {'machine': mid, 'ts': ts, 'can_id': f'0x{can_id:08X}',
-                           'fn': fn, 'fn_name': fn_n, 'src': src, 'src_name': src_n,
-                           'dst': dst, 'dst_name': dst_n, 'dlc_code': dlc_code,
-                           'num_bytes': nb, 'raw_hex': data_hex, 'data': data}
-                    try: await relay.send_str(json.dumps(msg))
-                    except Exception: pass
-                    # 2) save to disk
-                    _log_write(mid, 'raw',
-                               f"{ts} | 0x{can_id:08X} | FN:0x{fn:02X} SRC:0x{src:02X} DST:0x{dst:02X} | "
-                               f"DLC_code:{dlc_code} Bytes:{nb} | {data_hex}\n")
-                    _log_write(mid, 'decoded',
-                               csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n,
-                                       dlc_code, nb, data_hex, data) + '\n',
-                               header=CSV_HEADER)
-            except asyncio.TimeoutError:
-                await asyncio.sleep(0.02)
-            except (ConnectionResetError, OSError):
-                break
-    except asyncio.CancelledError:
-        pass
-    finally:
-        sock.close()
-        print(f"[M{mid}] stopped")
+    # Keep trying to (re)connect to the converter for as long as the relay is up,
+    # so a temporary converter hiccup (or stale socket) doesn't stop a machine forever.
+    while not relay.closed:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setblocking(False)   # non-blocking connect so an offline converter can't freeze the loop
+        try:
+            await asyncio.wait_for(loop.sock_connect(sock, (HOST, port)), timeout=5)
+            print(f"[M{mid}] reading {HOST}:{port}")
+        except Exception as e:
+            print(f"[M{mid}] offline ({HOST}:{port}) — {e}; retry in 5s")
+            try: await relay.send_str(json.dumps({'machine': mid, 'event': 'offline'}))
+            except Exception: pass
+            sock.close()
+            await asyncio.sleep(5)
+            continue
+        buf = b''
+        try:
+            while not relay.closed:
+                try:
+                    chunk = await asyncio.wait_for(loop.sock_recv(sock, 8192), timeout=0.05)
+                    if not chunk: break
+                    buf += chunk
+                    while len(buf) >= 69:
+                        frame = buf[:69]; buf = buf[69:]
+                        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                        dlc_code = frame[0] & 0x0F
+                        nb = CANFD_DLC.get(dlc_code, 0)
+                        raw_id = int.from_bytes(frame[1:5], 'little')
+                        can_id, fn, dst, src = decode_id(raw_id)
+                        data = list(frame[5:5 + nb])
+                        data_hex = ' '.join(f'{b:02X}' for b in data)
+                        fn_n  = fn_map.get(fn, f'FN_0x{fn:02X}')
+                        src_n = addr_map.get(src, f'0x{src:02X}')
+                        dst_n = addr_map.get(dst, f'0x{dst:02X}')
+                        # 1) push live to relay
+                        msg = {'machine': mid, 'ts': ts, 'can_id': f'0x{can_id:08X}',
+                               'fn': fn, 'fn_name': fn_n, 'src': src, 'src_name': src_n,
+                               'dst': dst, 'dst_name': dst_n, 'dlc_code': dlc_code,
+                               'num_bytes': nb, 'raw_hex': data_hex, 'data': data}
+                        try: await relay.send_str(json.dumps(msg))
+                        except Exception: pass
+                        # 2) save to disk
+                        _log_write(mid, 'raw',
+                                   f"{ts} | 0x{can_id:08X} | FN:0x{fn:02X} SRC:0x{src:02X} DST:0x{dst:02X} | "
+                                   f"DLC_code:{dlc_code} Bytes:{nb} | {data_hex}\n")
+                        _log_write(mid, 'decoded',
+                                   csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n,
+                                           dlc_code, nb, data_hex, data) + '\n',
+                                   header=CSV_HEADER)
+                except asyncio.TimeoutError:
+                    await asyncio.sleep(0.02)
+                except (ConnectionResetError, OSError):
+                    break
+        except asyncio.CancelledError:
+            sock.close(); return
+        finally:
+            sock.close()
+        # converter dropped the connection — wait briefly then reconnect
+        if not relay.closed:
+            print(f"[M{mid}] converter link dropped — reconnecting in 3s")
+            await asyncio.sleep(3)
 
 
 def build_manifest():
