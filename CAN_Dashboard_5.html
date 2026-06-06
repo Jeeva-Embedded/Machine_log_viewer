@@ -288,8 +288,17 @@ input,select{font-family:inherit;font-size:13px;}
 .btn-danger{background:var(--danger);color:#fff;}
 
 /* modal */
-#chart-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center;}
-#chart-modal.open{display:flex;}
+#chart-modal,#logs-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center;}
+#chart-modal.open,#logs-modal.open{display:flex;}
+.logs-table{width:100%;border-collapse:collapse;font-size:13px;}
+.logs-table th{position:sticky;top:0;background:#f8fafc;text-align:left;padding:8px 12px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--border);}
+.logs-table td{padding:8px 12px;border-bottom:1px solid var(--bg);}
+.logs-table tr:hover td{background:#f8fafc;}
+.logs-mname{font-weight:700;color:var(--accent);}
+.logs-dl{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid;margin-right:6px;}
+.logs-dl.raw{color:#2471a3;border-color:#93c5fd;background:#eff6ff;}
+.logs-dl.csv{color:#7c3aed;border-color:#c4b5fd;background:#f5f3ff;}
+.logs-dl:hover{filter:brightness(0.96);}
 .modal-box{width:82vw;height:80vh;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column;overflow:hidden;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
 .modal-title{font-size:15px;font-weight:700;color:var(--text);}
@@ -477,6 +486,10 @@ input,select{font-family:inherit;font-size:13px;}
       <button class="sidebar-link" onclick="document.querySelector('.log-panel').scrollIntoView({behavior:'smooth'})">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Frame Log
+      </button>
+      <button class="sidebar-link" onclick="openLogsView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Log Files
       </button>
     </div>
 
@@ -1013,6 +1026,23 @@ input,select{font-family:inherit;font-size:13px;}
   </div><!-- end page-wrap -->
 </div><!-- end view-dash -->
 
+
+<!-- LOG FILES MODAL -->
+<div id="logs-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Log Files — saved on the laptop (per session)</span>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" onclick="loadLogsTable()">⟳ Refresh</button>
+        <button class="btn btn-outline btn-sm" onclick="closeLogsView()">✕ Close</button>
+      </div>
+    </div>
+    <div class="modal-body" style="overflow:auto;">
+      <div id="logs-table-wrap"><div class="la-empty" style="padding:20px;color:var(--muted);">Loading…</div></div>
+    </div>
+    <div class="modal-footer">Each agent session (connect → disconnect) saves one RAW .txt and one decoded .csv per machine.</div>
+  </div>
+</div>
 
 <!-- CHART MODAL -->
 <div id="chart-modal">
@@ -1733,6 +1763,45 @@ async function loadLogList(){
 }
 // refresh archive every 30s while viewing
 setInterval(()=>{ if(document.getElementById('view-dash').style.display==='block') loadLogList(); }, 30000);
+
+// ── LOG FILES TAB (full view) ──
+function fmtSession(s){ // "20260606-093000" -> "2026-06-06  09:30:00"
+  const m=/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(s);
+  return m?`${m[1]}-${m[2]}-${m[3]}  ${m[4]}:${m[5]}:${m[6]}`:s;
+}
+function openLogsView(){ document.getElementById('logs-modal').classList.add('open'); loadLogsTable(); }
+function closeLogsView(){ document.getElementById('logs-modal').classList.remove('open'); }
+async function loadLogsTable(){
+  const box=document.getElementById('logs-table-wrap');
+  if(location.protocol==='file:'){ box.innerHTML='<div class="la-empty" style="padding:20px;color:var(--muted);">Open via the website (not file://) to see saved logs.</div>'; return; }
+  box.innerHTML='<div class="la-empty" style="padding:20px;color:var(--muted);">Loading…</div>';
+  try{
+    const j=await (await fetch('/api/logs',{cache:'no-store'})).json();
+    if(!j.agent){ box.innerHTML='<div class="la-empty" style="padding:20px;color:var(--muted);">Laptop agent offline — start START_AGENT.bat.</div>'; return; }
+    const files=j.files||[];
+    if(files.length===0){ box.innerHTML='<div class="la-empty" style="padding:20px;color:var(--muted);">No logs saved yet. Logs appear once the machine sends data.</div>'; return; }
+    // group: machine -> session -> {raw, decoded}
+    const g={};
+    for(const f of files){
+      g[f.machine]=g[f.machine]||{name:f.machine_name,sess:{}};
+      g[f.machine].sess[f.date]=g[f.machine].sess[f.date]||{};
+      g[f.machine].sess[f.date][f.kind]=f;
+    }
+    let html='<table class="logs-table"><thead><tr><th>Machine</th><th>Session (connect time)</th><th>Files</th></tr></thead><tbody>';
+    Object.keys(g).sort().forEach(mid=>{
+      const dates=Object.keys(g[mid].sess).sort().reverse();
+      dates.forEach((d,i)=>{
+        const e=g[mid].sess[d];
+        let links='';
+        if(e.raw)     links+=`<a class="logs-dl raw" href="/api/log?name=${encodeURIComponent(e.raw.name)}">⬇ RAW (${fmtSize(e.raw.size)})</a>`;
+        if(e.decoded) links+=`<a class="logs-dl csv" href="/api/log?name=${encodeURIComponent(e.decoded.name)}">⬇ CSV (${fmtSize(e.decoded.size)})</a>`;
+        html+=`<tr><td class="logs-mname">${i===0?g[mid].name:''}</td><td>${fmtSession(d)}</td><td>${links||'—'}</td></tr>`;
+      });
+    });
+    html+='</tbody></table>';
+    box.innerHTML=html;
+  }catch(err){ box.innerHTML='<div class="la-empty" style="padding:20px;color:var(--danger);">Could not load: '+err+'</div>'; }
+}
 
 // ── CLEAR ──
 function clearAll(){

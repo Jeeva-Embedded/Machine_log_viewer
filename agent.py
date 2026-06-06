@@ -62,8 +62,17 @@ CURR_GAIN = 0.00672
 VOLT_GAIN = 0.017
 
 CSV_HEADER = ("Timestamp,Machine,CAN_ID,FunctionID,FunctionName,Source_Addr,Source_Board,"
-    "Dest_Addr,Dest_Board,DLC_Code,Bytes,Raw_Data,TargetRPM,PresentRPM,PWM,"
-    "MosfetTemp_C,MotorTemp_C,CurrentADC,CurrentA,VoltageADC,VoltageV,Power_W,ErrorCode\n")
+    "Dest_Addr,Dest_Board,DLC_Code,Bytes,Raw_Data,"
+    "TargetRPM,PresentRPM,PWM,MosfetTemp_C,MotorTemp_C,CurrentADC,CurrentA,VoltageADC,VoltageV,Power_W,"
+    "Command,ACK,RUT_RampUpTime_s,RDT_RampDownTime_s,Motor_RPM,Draft,Delivery_mMin,"
+    "AL_Kp,AL_Sliver_N1,AL_Sliver_N,AL_Sliver_Nm1,AL_Target_gm,AL_Counter,AL_ScanningSensor,"
+    "AL_CoilerSensor,ErrorCode\n")
+
+# session id = one set of files per agent run (connect -> disconnect)
+SESSION = datetime.now().strftime('%Y%m%d-%H%M%S')
+
+CMD_MAP = {1:'EmergencyStop',2:'Start',3:'RampDownStop',4:'ChangeRPM',
+           5:'Homing',6:'Resume',7:'Reset',8:'AckPresence'}
 
 
 def decode_id(raw_id):
@@ -74,42 +83,50 @@ def decode_id(raw_id):
 
 
 def csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n, dlc, nb, data_hex, data):
-    cells = [ts, f'M{mid}', f'0x{can_id:08X}', f'0x{fn:02X}', fn_n,
-             f'0x{src:02X}', src_n, f'0x{dst:02X}', dst_n, str(dlc), str(nb), data_hex,
-             '', '', '', '', '', '', '', '', '', '', '']
-    if fn == 0x09 and len(data) >= 12:
+    # 38 columns — decodes ALL frame types (runtime, motor state, run-setup, AL setup/settings/sensor, ACK, error)
+    c = [ts, f'M{mid}', f'0x{can_id:08X}', f'0x{fn:02X}', fn_n,
+         f'0x{src:02X}', src_n, f'0x{dst:02X}', dst_n, str(dlc), str(nb), data_hex] + [''] * 26
+    if fn == 0x09 and len(data) >= 12:                 # Runtime Data
         curr = (data[8] << 8) | data[9]; volt = (data[10] << 8) | data[11]
         ca = curr * CURR_GAIN; vv = volt * VOLT_GAIN
-        cells[12] = str((data[0] << 8) | data[1]); cells[13] = str((data[2] << 8) | data[3])
-        cells[14] = str((data[4] << 8) | data[5]); cells[15] = str(data[6]); cells[16] = str(data[7])
-        cells[17] = str(curr); cells[18] = f'{ca:.4f}'
-        cells[19] = str(volt); cells[20] = f'{vv:.3f}'; cells[21] = f'{ca*vv:.3f}'
-    elif fn == 0x02 and len(data) >= 2:
-        cells[22] = f'0x{((data[0] << 8) | data[1]):04X}'
-    return ','.join(cells)
+        c[12] = str((data[0] << 8) | data[1]); c[13] = str((data[2] << 8) | data[3])
+        c[14] = str((data[4] << 8) | data[5]); c[15] = str(data[6]); c[16] = str(data[7])
+        c[17] = str(curr); c[18] = f'{ca:.4f}'; c[19] = str(volt); c[20] = f'{vv:.3f}'; c[21] = f'{ca*vv:.3f}'
+    elif fn == 0x01 and len(data) >= 1:                 # Motor State (command)
+        c[22] = CMD_MAP.get(data[0], f'0x{data[0]:02X}')
+    elif fn in (0x0F, 0x20) and len(data) >= 1:         # ACK
+        c[23] = 'OK' if data[0] == 1 else f'0x{data[0]:02X}'
+    elif fn == 0x07 and len(data) >= 4:                 # Run Setup
+        c[24] = str(data[0]); c[25] = str(data[1]); c[26] = str((data[2] << 8) | data[3])
+    elif fn == 0x1F and len(data) >= 4:                 # AL Setup (draft/delivery)
+        c[27] = f'{((data[0] << 8) | data[1]) / 100:.2f}'; c[28] = str((data[2] << 8) | data[3])
+    elif fn == 0x24 and len(data) >= 10:                # AL Settings
+        c[29] = f'{((data[0] << 8) | data[1]) / 1000:.4f}'
+        c[30] = str((data[2] << 8) | data[3]); c[31] = str((data[4] << 8) | data[5])
+        c[32] = str((data[6] << 8) | data[7]); c[33] = f'{((data[8] << 8) | data[9]) / 100:.2f}'
+    elif fn == 0x1E and len(data) >= 5:                 # AL Sensor
+        c[34] = str(data[0]); c[35] = str((data[1] << 8) | data[2]); c[36] = str((data[3] << 8) | data[4])
+    elif fn == 0x02 and len(data) >= 2:                 # Error
+        c[37] = f'0x{((data[0] << 8) | data[1]):04X}'
+    return ','.join(c)
 
 
-# ── per-(machine,kind) rolling daily log files ──
-_logfiles = {}   # (mid, kind) -> {'date':..., 'fh':...}
+# ── per-(machine,kind) log files — one set per agent session (connect -> disconnect) ──
+_logfiles = {}   # (mid, kind) -> file handle
 
 def _log_write(mid, kind, line, header=None):
-    today = datetime.now().strftime('%Y-%m-%d')
     key = (mid, kind)
-    cur = _logfiles.get(key)
-    if cur is None or cur['date'] != today:
-        if cur:
-            try: cur['fh'].close()
-            except Exception: pass
+    fh = _logfiles.get(key)
+    if fh is None:
         ext = 'txt' if kind == 'raw' else 'csv'
-        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{today}_{kind}.{ext}")
+        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{SESSION}_{kind}.{ext}")
         new = not os.path.exists(path)
         fh = open(path, 'a', encoding='utf-8')
         if new and header:
             fh.write(header)
-        _logfiles[key] = {'date': today, 'fh': fh}
-        cur = _logfiles[key]
-    cur['fh'].write(line)
-    cur['fh'].flush()
+        _logfiles[key] = fh
+    fh.write(line)
+    fh.flush()
 
 
 async def read_machine(mid, port, relay):
