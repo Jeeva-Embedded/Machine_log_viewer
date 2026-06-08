@@ -35,6 +35,7 @@ LOG_DIR    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 # Google Drive auto-upload (via rclone). Empty DRIVE_FOLDER_ID = disabled.
 RCLONE          = os.environ.get('RCLONE', 'rclone')
 DRIVE_FOLDER_ID = os.environ.get('DRIVE_FOLDER_ID', '')
+UPLOAD_EVERY    = int(os.environ.get('UPLOAD_EVERY', '600'))   # secs between Drive syncs of the day's open files
 # a folder set from the website is persisted here and overrides the env value
 _DRIVE_CFG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'drive_folder.txt')
 try:
@@ -137,58 +138,42 @@ def csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n, dlc, nb, data_hex
     return ','.join(c)
 
 
-# ── recording: a NEW raw+csv set per "Connect Live -> Disconnect" on the dashboard ──
-# The relay tells us when the FIRST viewer connects (record_start) and when the LAST
-# viewer leaves (record_stop). Frames are only written to disk while recording.
-_logfiles  = {}      # (mid, kind) -> {'session':id, 'fh':file}
-RECORDING  = False
-_record_id = None
+# ── ALWAYS-ON logging: per-machine, per-DAY raw+csv files ──────────────────────
+# Logging runs whenever the agent is connected to the converter — no browser needed.
+# Each machine appends to a daily file; at midnight (IST) the file rolls over and the
+# finished day is pushed to Drive. Connect/Disconnect on the website now only controls
+# the LIVE VIEW, not logging. The day's open files are also synced to Drive every
+# UPLOAD_EVERY seconds (see drive_sync_loop) so the cloud copy stays fresh.
+_logfiles = {}      # (mid, kind) -> {'day':'YYYY-MM-DD', 'fh':file, 'path':str}
 
-def record_start():
-    global RECORDING, _record_id
-    _record_id = datetime.now(IST).strftime('%Y%m%d-%H%M%S')
-    RECORDING = True
-    print(f"[REC] started — session {_record_id}")
-
-def record_stop():
-    """Close this session's files; return their paths (to upload to Drive)."""
-    global RECORDING
-    if not RECORDING:
-        return []
-    RECORDING = False
-    paths = []
-    for key in list(_logfiles):
-        e = _logfiles[key]
-        try: e['fh'].close()
-        except Exception: pass
-        if e.get('path'):
-            paths.append(e['path'])
-        del _logfiles[key]
-    print("[REC] stopped — session saved")
-    return paths
+def _today_ist():
+    return datetime.now(IST).strftime('%Y-%m-%d')
 
 def _log_write(mid, kind, line, header=None):
-    if not RECORDING or not _record_id:
-        return   # not recording (no viewer connected) — don't save
+    today = _today_ist()
     key = (mid, kind)
     cur = _logfiles.get(key)
-    if cur is None or cur['session'] != _record_id:
-        if cur:
+    if cur is None or cur['day'] != today:
+        if cur:                       # day rolled over -> close + upload the finished file
             try: cur['fh'].close()
             except Exception: pass
+            asyncio.create_task(upload_to_drive([cur['path']]))
         ext = 'txt' if kind == 'raw' else 'csv'
-        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{_record_id}_{kind}.{ext}")
+        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{today}_{kind}.{ext}")
         new = not os.path.exists(path)
         fh = open(path, 'a', encoding='utf-8')
         if new and header:
             fh.write(header)
-        _logfiles[key] = {'session': _record_id, 'fh': fh, 'path': path}
+        _logfiles[key] = {'day': today, 'fh': fh, 'path': path}
         cur = _logfiles[key]
     cur['fh'].write(line)
     cur['fh'].flush()
 
+def open_log_paths():
+    return list({e['path'] for e in _logfiles.values()})
+
 async def upload_to_drive(paths):
-    """Upload finished session files to the Google Drive folder via rclone."""
+    """Upload (overwrite) the given log files to the Google Drive folder via rclone."""
     if not DRIVE_FOLDER_ID or not paths:
         return
     dest = f"gdrive,root_folder_id={DRIVE_FOLDER_ID}:"
@@ -206,6 +191,24 @@ async def upload_to_drive(paths):
             print(f"[DRIVE] rclone not found at '{RCLONE}' — set RCLONE path"); return
         except Exception as e:
             print(f"[DRIVE] error: {e}")
+
+
+async def drive_sync_loop():
+    """Every UPLOAD_EVERY seconds, push the day's open log files (changed ones) to Drive."""
+    last = {}     # path -> last-uploaded mtime
+    while True:
+        await asyncio.sleep(UPLOAD_EVERY)
+        changed = []
+        for p in open_log_paths():
+            try:
+                m = os.path.getmtime(p)
+            except OSError:
+                continue
+            if last.get(p) != m:
+                changed.append(p)
+                last[p] = m
+        if changed:
+            await upload_to_drive(changed)
 
 
 async def read_machine(mid, port, relay):
@@ -338,14 +341,9 @@ async def recv_control(relay):
             t = j.get('type')
             if t == 'get_file':
                 await send_file(relay, j.get('req_id'), j.get('name', ''))
-            elif t == 'record_start':
-                record_start()
-            elif t == 'record_stop':
-                paths = record_stop()
-                if paths:
-                    asyncio.create_task(upload_to_drive(paths))   # upload session to Drive
             elif t == 'set_drive_folder':
                 set_drive_folder(j.get('folder_id', ''))
+            # record_start / record_stop from the relay are ignored — logging is always-on now
         elif m.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
             break
 
@@ -360,6 +358,7 @@ async def run():
     print(f"  Relay     : {RELAY_URL}")
     print(f"  Logs      : {LOG_DIR}")
     print("=" * 58)
+    asyncio.create_task(drive_sync_loop())   # always-on Drive backup, independent of the relay
     while True:
         try:
             async with aiohttp.ClientSession() as s:
