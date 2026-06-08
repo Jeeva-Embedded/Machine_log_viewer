@@ -47,6 +47,6 @@ cloudflared tunnel --url http://localhost:8080
 
 ## Files
 - `server.py` — serves the dashboard **and** the live data on one port (8080)
-- `CAN_Dashboard_5.html` — the dashboard (served by server.py)
+- `Textile_FDCAN_Monitor.html` — the dashboard (served by server.py)
 - `START_REMOTE.bat` — one-click: server + public tunnel
 - `ws_proxy.py` — older 2-process version (no longer needed; server.py replaces it)

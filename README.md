@@ -15,7 +15,7 @@ UT-6504-FD CAN-FD-to-Ethernet converter, viewable from anywhere.
   agent on `/feed`, and broadcasts live frames to browsers on `/ws`.
 - **agent.py** — runs on the factory laptop. Reads the converter (TCP 1001-4001),
   decodes each 69-byte CAN-FD frame, and pushes JSON up to the relay.
-- **CAN_Dashboard_5.html** — the dashboard UI (Gen4 style, per-machine views).
+- **Textile_FDCAN_Monitor.html** — the dashboard UI (Gen4 style, per-machine views).
 - **server.py** — all-in-one local version (dashboard + data on one port) for
   running entirely on the laptop without the cloud.
 
@@ -45,7 +45,7 @@ Trigger points and the recommended upgrade for each:
 | When you hit this | Upgrade to |
 |---|---|
 | Agent must run 24/7 and you don't want Python installed on the gateway PC | **Rewrite `agent.py` in Go** → a single `.exe` that auto-starts on boot, no runtime to install, very robust concurrency. The CAN frame format and the JSON it sends to the relay stay identical, so `relay_server.py` and the dashboard need **no changes**. |
-| The dashboard (`CAN_Dashboard_5.html`, ~2000 lines) gets hard to maintain | Move the UI to a component framework (**Svelte** preferred for small bundle / no heavy tooling, or React). Keep the same relay `/ws` JSON contract. |
+| The dashboard (`Textile_FDCAN_Monitor.html`, ~2000 lines) gets hard to maintain | Move the UI to a component framework (**Svelte** preferred for small bundle / no heavy tooling, or React). Keep the same relay `/ws` JSON contract. |
 | Many machines / many customers / persistent history / alerting | Adopt a standard **IoT stack**: agent publishes to **MQTT**, visualize in **Grafana** (or use ThingsBoard / Node-RED). Replaces the custom relay + dashboard with battle-tested infra. |
 | Need a permanent fixed URL / no laptop at all | Either a **named Cloudflare tunnel** (permanent URL, laptop still runs the agent) or **Option B**: put the converter in *TCP-client* mode dialing a small **VPS** with a public IP (no laptop needed — needs a ~$5/mo VPS + converter reconfig). |
 

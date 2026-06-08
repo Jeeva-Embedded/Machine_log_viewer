@@ -139,7 +139,7 @@ These are not yet solved and we'd like your recommendation:
 | `relay_server.py` (main) | Phase-1 cloud relay on Render (HTTP/WS only). |
 | `agent.py` (main) | Phase-1 laptop agent: reads converter TCP, decodes, **always-on logging + Drive upload**. |
 | `tcp_server.py` (**phase2** branch) | **Phase-2 server to deploy on DigitalOcean** — converter dials in, decode + dashboard in one process. |
-| `CAN_Dashboard_5.html` | The dashboard UI (served by both servers). |
+| `Textile_FDCAN_Monitor.html` | The dashboard UI (served by both servers). |
 | `requirements.txt` | Python deps (`aiohttp`). |
 | `PROJECT_OVERVIEW.md` | Non-technical overview for management. |
 | `server.py` | Older single-laptop + Cloudflare-tunnel variant (reference only). |

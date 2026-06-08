@@ -19,7 +19,7 @@ from aiohttp import web, WSMsgType
 
 FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')
 PORT       = int(os.environ.get('PORT', '8080'))
-HTML_FILE  = 'CAN_Dashboard_5.html'
+HTML_FILE  = 'Textile_FDCAN_Monitor.html'
 
 viewers = set()
 last_by_key = {}          # latest frame per machine (snapshot for new viewers)

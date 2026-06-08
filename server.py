@@ -27,7 +27,7 @@ from aiohttp import web, WSMsgType
 # ── CONFIG ──
 HOST       = os.environ.get('CAN_HOST', '192.168.1.125')  # UT-6504-FD converter IP
 WEB_PORT   = int(os.environ.get('WEB_PORT', '8080'))      # single port for web + ws
-HTML_FILE  = 'CAN_Dashboard_5.html'
+HTML_FILE  = 'Textile_FDCAN_Monitor.html'
 
 MACHINES = {1: 1001, 2: 2001, 3: 3001, 4: 4001}   # machine -> TCP port
 
