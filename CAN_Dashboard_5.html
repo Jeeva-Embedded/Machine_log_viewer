@@ -49,8 +49,11 @@ input,select{font-family:inherit;font-size:13px;}
 .topbar-status.warn{color:var(--orange);border-color:#fde68a;background:#fffbeb;}
 .status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
 .status-dot.pulse{animation:pulse 1.2s ease-in-out infinite;}
-.topbar-al-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid var(--border);color:var(--muted);background:var(--bg);}
-.topbar-al-pill.active{color:var(--purple);border-color:#c4b5fd;background:#f5f3ff;}
+.topbar-al-pill{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid var(--border);color:var(--muted);background:var(--bg);}
+.topbar-al-pill .al-dot{width:11px;height:11px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 currentColor;}
+.topbar-al-pill.on{color:#15803d;border-color:#86efac;background:#f0fdf4;}
+.topbar-al-pill.on .al-dot{animation:pulse 1.2s ease-in-out infinite;}
+.topbar-al-pill.off{color:#dc2626;border-color:#fca5a5;background:#fef2f2;}
 .topbar-machine-badge{padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--navy);color:#fff;}
 .back-link{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:13px;font-weight:500;transition:all .15s;cursor:pointer;}
 .back-link:hover{border-color:var(--primary);color:var(--primary);}
@@ -331,7 +334,7 @@ input,select{font-family:inherit;font-size:13px;}
   <div class="topbar-divider"></div>
   <span class="topbar-page" id="topbar-page">CAN Monitor</span>
   <div class="topbar-right">
-    <div class="topbar-al-pill" id="pill-al"><span class="status-dot"></span> AUTO LEVELLER</div>
+    <div class="topbar-al-pill off" id="pill-al" style="display:none"><span class="al-dot"></span> AUTO LEVELLER OFF</div>
     <div class="topbar-status disconnected" id="pill-conn"><span class="status-dot" id="dot-conn"></span> DISCONNECTED</div>
     <span class="topbar-machine-badge" id="topbar-machine" style="display:none">M1</span>
     <button class="back-link" id="btn-back" onclick="goHome()" style="display:none">← Home</button>
@@ -1292,6 +1295,7 @@ function goHome(){
   document.getElementById('view-home').style.display='block';
   document.getElementById('topbar-machine').style.display='none';
   document.getElementById('btn-back').style.display='none';
+  document.getElementById('pill-al').style.display='none';   // AL pill is DrawFrame-only
   document.getElementById('topbar-page').textContent='CAN Monitor';
   document.title='Gen4 Textile CAN Monitor';
 }
@@ -1451,8 +1455,8 @@ function setPillConn(cls,label){
 }
 function setALPill(active){
   const el=document.getElementById('pill-al');if(!el)return;
-  el.className='topbar-al-pill'+(active?' active':'');
-  el.innerHTML=`<span class="status-dot"></span> ${active?'AL ACTIVE':'AUTO LEVELLER'}`;
+  el.className='topbar-al-pill '+(active?'on':'off');
+  el.innerHTML=`<span class="al-dot"></span> AUTO LEVELLER ${active?'ON':'OFF'}`;
 }
 
 // ── LOG ──
