@@ -337,9 +337,10 @@ def main():
     app.router.add_post('/api/admin/upload', admin_upload)
     app.router.add_get('/api/admin/config', admin_get_config)
     app.router.add_post('/api/admin/config', admin_save_config)
-    # static frontend assets (css/js) for the dashboard + admin pages
+    # static frontend assets (css/js/img) for the dashboard + admin pages
     app.router.add_static('/css', os.path.join(WEB_DIR, 'css'))
     app.router.add_static('/js', os.path.join(WEB_DIR, 'js'))
+    app.router.add_static('/img', os.path.join(WEB_DIR, 'img'))
     print(f"Relay on :{PORT}  (token set: {FEED_TOKEN != 'change-me-please'}, "
           f"admin: {'on' if ADMIN_PASSWORD else 'OFF'})")
     web.run_app(app, host='0.0.0.0', port=PORT)

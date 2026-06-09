@@ -2,8 +2,7 @@
 .topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);background:#fff;
   border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;
   z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.topbar-logo{width:40px;height:28px;background:var(--navy);border-radius:7px;display:flex;
-  align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;}
+.topbar-logo-img{height:34px;width:auto;display:block;}
 .topbar-name{font-size:15px;font-weight:800;}
 .topbar-name span{color:var(--primary);}
 .topbar-divider{width:1px;height:24px;background:var(--border);}
@@ -34,8 +33,7 @@
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .login-card{background:#fff;border-radius:16px;box-shadow:var(--shadow-md);padding:36px 32px;
   width:100%;max-width:380px;text-align:center;animation:fadeIn .3s;}
-.login-logo{width:54px;height:54px;background:var(--navy);border-radius:12px;display:flex;
-  align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;margin:0 auto 16px;}
+.login-logo-img{height:60px;width:auto;display:block;margin:0 auto 18px;}
 .login-card h1{font-size:20px;font-weight:800;margin-bottom:4px;}
 .login-card p{font-size:13px;color:var(--muted);margin-bottom:22px;}
 .login-card input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;

@@ -172,6 +172,7 @@ def main():
     app.router.add_get('/health', health)
     app.router.add_static('/css', os.path.join(WEB_DIR, 'css'))
     app.router.add_static('/js', os.path.join(WEB_DIR, 'js'))
+    app.router.add_static('/img', os.path.join(WEB_DIR, 'img'))
 
     print("=" * 58)
     print("  Textile CAN Monitor — Web + Live Server")
