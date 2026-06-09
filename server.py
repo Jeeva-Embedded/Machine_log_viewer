@@ -27,7 +27,8 @@ from aiohttp import web, WSMsgType
 # ── CONFIG ──
 HOST       = os.environ.get('CAN_HOST', '192.168.1.125')  # UT-6504-FD converter IP
 WEB_PORT   = int(os.environ.get('WEB_PORT', '8080'))      # single port for web + ws
-HTML_FILE  = 'Textile_FDCAN_Monitor.html'
+WEB_DIR    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web')
+HTML_FILE  = os.path.join(WEB_DIR, 'dashboard.html')
 
 MACHINES = {1: 1001, 2: 2001, 3: 3001, 4: 4001}   # machine -> TCP port
 
@@ -155,10 +156,9 @@ async def ws_handler(request):
 
 
 async def index(request):
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), HTML_FILE)
-    if not os.path.exists(path):
-        return web.Response(text=f"{HTML_FILE} not found next to server.py", status=404)
-    return web.FileResponse(path)
+    if not os.path.exists(HTML_FILE):
+        return web.Response(text="web/dashboard.html not found", status=404)
+    return web.FileResponse(HTML_FILE)
 
 
 async def health(request):
@@ -170,6 +170,8 @@ def main():
     app.router.add_get('/', index)
     app.router.add_get('/ws', ws_handler)
     app.router.add_get('/health', health)
+    app.router.add_static('/css', os.path.join(WEB_DIR, 'css'))
+    app.router.add_static('/js', os.path.join(WEB_DIR, 'js'))
 
     print("=" * 58)
     print("  Textile CAN Monitor — Web + Live Server")

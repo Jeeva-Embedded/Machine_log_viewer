@@ -24,9 +24,11 @@ import can_spec
 FEED_TOKEN     = os.environ.get('FEED_TOKEN', 'change-me-please')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')   # empty = admin page disabled
 PORT           = int(os.environ.get('PORT', '8080'))
-HTML_FILE      = 'Textile_FDCAN_Monitor.html'
-ADMIN_FILE     = 'admin.html'
-CONFIG_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'can_config.json')
+_HERE          = os.path.dirname(os.path.abspath(__file__))
+WEB_DIR        = os.path.join(_HERE, 'web')              # static frontend (html/css/js)
+HTML_FILE      = os.path.join(WEB_DIR, 'dashboard.html')
+ADMIN_FILE     = os.path.join(WEB_DIR, 'admin.html')
+CONFIG_FILE    = os.path.join(_HERE, 'can_config.json')
 MAX_UPLOAD     = 10 * 1024 * 1024   # 10 MB cap on the uploaded .xlsx
 
 viewers = set()
@@ -62,14 +64,13 @@ def _write_config_file(cfg):
 
 
 async def index(request):
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), HTML_FILE)
-    if not os.path.exists(path):
-        return web.Response(text=f"{HTML_FILE} not found", status=404)
-    return web.FileResponse(path)
+    if not os.path.exists(HTML_FILE):
+        return web.Response(text="web/dashboard.html not found", status=404)
+    return web.FileResponse(HTML_FILE)
 
 
 async def health(request):
-    return web.json_response({'status': 'ok', 'version': 'v5-agent-config',
+    return web.json_response({'status': 'ok', 'version': 'v6-restructure',
                               'viewers': len(viewers),
                               'agent_connected': agent_ws is not None,
                               'admin_enabled': bool(ADMIN_PASSWORD),
@@ -119,10 +120,9 @@ def _admin_ok(request):
 
 
 async def admin_index(request):
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ADMIN_FILE)
-    if not os.path.exists(path):
-        return web.Response(text=f"{ADMIN_FILE} not found", status=404)
-    return web.FileResponse(path)
+    if not os.path.exists(ADMIN_FILE):
+        return web.Response(text="web/admin.html not found", status=404)
+    return web.FileResponse(ADMIN_FILE)
 
 
 async def admin_login(request):
@@ -337,6 +337,9 @@ def main():
     app.router.add_post('/api/admin/upload', admin_upload)
     app.router.add_get('/api/admin/config', admin_get_config)
     app.router.add_post('/api/admin/config', admin_save_config)
+    # static frontend assets (css/js) for the dashboard + admin pages
+    app.router.add_static('/css', os.path.join(WEB_DIR, 'css'))
+    app.router.add_static('/js', os.path.join(WEB_DIR, 'js'))
     print(f"Relay on :{PORT}  (token set: {FEED_TOKEN != 'change-me-please'}, "
           f"admin: {'on' if ADMIN_PASSWORD else 'OFF'})")
     web.run_app(app, host='0.0.0.0', port=PORT)

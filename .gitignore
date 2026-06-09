@@ -38,3 +38,8 @@ START_REMOTE.bat
 test_*.py
 mock_device.py
 read_excel*.py
+_split.py
+
+# large sample capture / scratch runtime files (keep out of git)
+canlogcarding2.txt
+agent_live.txt

@@ -1,121 +1,246 @@
-# Machine Log Viewer — Textile CAN Monitor
+# Textile CAN Monitor — Gen4 Industrial IoT
 
-Live monitoring of textile machinery (DrawFrame / BlowCard / FlyerFrame) over a
-UT-6504-FD CAN-FD-to-Ethernet converter, viewable from anywhere.
+Live monitoring of textile machinery (**DrawFrame · BlowCard · FlyerFrame · RingFrame**)
+over a **UTEK UT-6504-FD** CAN-FD-to-Ethernet converter, viewable from anywhere, with
+per-session logging to raw `.txt` + decoded `.csv` and Google-Drive backup.
 
-## Architecture (Option A — cloud relay)
-```
- Browser (anywhere) ──https──► [ Render: relay_server.py + dashboard ]
-                                          ▲
-                                          │ outbound wss (dials up)
-                              [ Laptop: agent.py ] ──TCP──► UT-6504-FD (factory LAN)
-```
+- **Repository:** https://github.com/Jeeva-Embedded/Machine_log_viewer
+- **Live (Phase 1):** https://machine-log-viewer-kcx3.onrender.com
 
-- **relay_server.py** — runs on Render. Serves the dashboard, accepts the laptop
-  agent on `/feed`, and broadcasts live frames to browsers on `/ws`.
-- **agent.py** — runs on the factory laptop. Reads the converter (TCP 1001-4001),
-  decodes each 69-byte CAN-FD frame, and pushes JSON up to the relay.
-- **Textile_FDCAN_Monitor.html** — the dashboard UI (Gen4 style, per-machine views).
-- **server.py** — all-in-one local version (dashboard + data on one port) for
-  running entirely on the laptop without the cloud.
-
-## Deploy
-1. Push this repo to GitHub (done).
-2. On Render: New ▸ Web Service ▸ connect this repo.
-   - Build: `pip install -r requirements.txt`
-   - Start: `python relay_server.py`
-   - Env var: `FEED_TOKEN` = a secret of your choice.
-3. On the laptop: set `RELAY_URL` and `FEED_TOKEN` in `agent.py`, then
-   `pip install aiohttp && python agent.py`.
-4. Open the Render URL from anywhere → pick a machine → live data.
-
-## Why this stack (Python + single-file HTML)
-Chosen for **one converter, a few viewers, fast iteration, zero budget, and a
-non-web-dev owner**:
-- Python handles raw TCP + CAN byte decoding cleanly and runs with just
-  `pip install aiohttp` (no compiler/toolchain).
-- A single HTML file opens by double-click — no build step, no `npm`, no bundler.
-- Render hosts it free; Chart.js comes from a CDN.
-
-It is the right tool for *now*, not necessarily for scale.
-
-## Upgrade path (when/if this grows)
-Trigger points and the recommended upgrade for each:
-
-| When you hit this | Upgrade to |
-|---|---|
-| Agent must run 24/7 and you don't want Python installed on the gateway PC | **Rewrite `agent.py` in Go** → a single `.exe` that auto-starts on boot, no runtime to install, very robust concurrency. The CAN frame format and the JSON it sends to the relay stay identical, so `relay_server.py` and the dashboard need **no changes**. |
-| The dashboard (`Textile_FDCAN_Monitor.html`, ~2000 lines) gets hard to maintain | Move the UI to a component framework (**Svelte** preferred for small bundle / no heavy tooling, or React). Keep the same relay `/ws` JSON contract. |
-| Many machines / many customers / persistent history / alerting | Adopt a standard **IoT stack**: agent publishes to **MQTT**, visualize in **Grafana** (or use ThingsBoard / Node-RED). Replaces the custom relay + dashboard with battle-tested infra. |
-| Need a permanent fixed URL / no laptop at all | Either a **named Cloudflare tunnel** (permanent URL, laptop still runs the agent) or **Option B**: put the converter in *TCP-client* mode dialing a small **VPS** with a public IP (no laptop needed — needs a ~$5/mo VPS + converter reconfig). |
-
-**Order of priority if productizing:** Go agent first (reliability), then MQTT+Grafana
-(scale), then a UI framework (maintainability).
+> This single file is the project's only documentation. Section 9 is the DigitalOcean /
+> Phase-2 handoff for a DevOps engineer.
 
 ---
 
-## Phased plan
+## 1. What it is
 
-### Phase 1 — CURRENT (live)
-Laptop runs `agent.py` (reads the converter on the factory LAN and dials **up** to
-the Render relay). Browser opens the Render URL. A laptop must stay on next to the
-machine. Free (Render free tier). This is what's deployed today.
+Each machine's STM32 motherboard talks to its motors over a **CAN FD** bus. The UT-6504-FD
+converter packs every CAN frame into a fixed **69-byte TCP packet** (1 byte frame info +
+4 byte CAN ID + 64 byte data) and streams it out — **one TCP port per machine**
+(1001/2001/3001/4001). The converter speaks **raw TCP only** (no HTTP/MQTT/WebSocket), and
+browsers can't open raw TCP — so a program in the middle always does
+**raw TCP in → decode → WebSocket out to the browser**.
+
+Per motor the data includes: Target/Present RPM, PWM, MOSFET & motor temperature,
+current (A), voltage (V), power (W), run setup (ramp up/down, RPM), plus machine-specific
+data (DrawFrame AutoLeveller; FlyerFrame lift motors).
+
+---
+
+## 2. Architecture (Phase 1 — live today)
 
 ```
- Browser ──https──► [ Render: relay + dashboard ] ◄──wss── [ Laptop agent ] ──TCP──► UT-6504-FD
+  Browser (office / home / phone)
+       │  HTTPS + secure WebSocket
+       ▼
+  [ CLOUD: Render, free ]   relay_server.py  — serves the site, fans out live data
+       ▲
+       │  outbound wss (the laptop dials UP to the cloud)
+  [ FACTORY LAPTOP ]        agent.py — reads converter over TCP, decodes, logs, uploads
+       │  raw TCP  (192.168.1.125 : 1001/2001/3001/4001)
+  UT-6504-FD  (TCP Server mode)
+       │  CAN FD
+  Machine motors (STM32)
 ```
 
-### Phase 2 — PLANNED: converter → router → server (no laptop)
-Remove the laptop entirely. The UT-6504-FD is plugged into the **factory router**
-(internet access) and configured in **TCP-Client mode** so the converter itself
-**dials out** to our cloud server and streams the raw CAN frames.
+- **`relay_server.py`** (Render) — serves the dashboard + admin page, accepts the laptop
+  agent on `/feed`, broadcasts live frames to browsers on `/ws`, exposes log
+  list/download (`/api/logs`, `/api/log`) and the admin API (`/api/admin/*`).
+- **`agent.py`** (factory laptop) — reads all 4 machines in parallel, decodes each frame
+  to JSON, pushes it up to the relay, and writes per-machine/per-day logs (uploaded to
+  Google Drive via rclone). Holds nothing else; the relay is stateless w.r.t. CAN data.
+- **`can_spec.py`** — parses the *CAN Communication Plan* Excel into a decode config
+  (see §6).
+- **`server.py`** — all-in-one local variant (dashboard + live data on one port) for
+  running entirely on the laptop, optionally exposed via a Cloudflare tunnel (see §8).
+
+---
+
+## 3. Project structure
 
 ```
- Machine ─CAN─► UT-6504-FD ─Ethernet─► Router ─Internet(NAT, outbound)─► Cloud Server ──► Browsers
+/                         repo root — Python stays here (Render & laptop run these)
+├── README.md             ← this file (single source of docs)
+├── render.yaml           Render blueprint (env: FEED_TOKEN, ADMIN_PASSWORD)
+├── requirements.txt      aiohttp, openpyxl
+├── relay_server.py       Phase-1 cloud relay + website + admin API
+├── agent.py              Phase-1 laptop agent (TCP read, decode, log, Drive upload)
+├── can_spec.py           CAN Communication Plan (.xlsx) → decode config
+├── server.py             local all-in-one server (Cloudflare-tunnel variant)
+└── web/                  all static frontend, served by the relay
+    ├── dashboard.html    page shell (markup only)
+    ├── admin.html        admin page shell (markup only)
+    ├── css/
+    │   ├── theme.css     shared design tokens (:root), reset, keyframes
+    │   ├── dashboard.css dashboard styles
+    │   └── admin.css     admin styles
+    └── js/
+        ├── dashboard.js  the dashboard engine (WebSocket, decode, charts, render)
+        ├── admin.js      the admin page logic
+        └── machines/     ONE file per machine — debug a machine in isolation here
+            ├── drawframe.js   blowcard.js   flyerframe.js   ringframe.js
 ```
 
-How it works / what's needed:
-- **Converter config:** set Network mode = *TCP Client*, Remote Server = our server's
-  public IP, Remote Port = e.g. `443`/`9001`, and set the converter's Gateway to the
-  router so it can reach the internet. It dials **outbound**, so **no port-forwarding
-  or static public IP** is needed at the factory.
-- **Server side needs a real public TCP port.** Render web services only expose
-  HTTP/HTTPS, so Phase 2 needs a small **VPS** (DigitalOcean / AWS Lightsail / Hetzner,
-  ~$5/mo) with a public IP. A `tcp_server.py` *listens* for the converter, decodes the
-  69-byte frames (reuse the exact decode logic already in `agent.py`/`server.py` —
-  only the direction flips from "connect to converter" to "accept from converter"),
-  then serves the dashboard + `/ws` to browsers (same `relay_server.py` UI).
-- **Multiple converters / channels:** each CAN port (1001–4001) can be pointed at the
-  server; tag each stream by source so the dashboard routes it to the right machine.
-- **Security:** restrict the listener to the converter's source, or add a simple
-  handshake/token, since a raw public TCP port is otherwise open.
+**Per-machine files:** each `web/js/machines/*.js` registers that machine's spec
+(`addrMap`, `motorMap`, `motorNames`, `fnMap`, `hasAL`, `hasLifts`, `errorBytes`, port,
+labels) into `window.MACHINE_CONFIG` / `window.MACHINE_DEFS`. `dashboard.js` is a generic
+engine that reads those — so a wrong address or motor for one machine is fixed in that one
+file; shared rendering/decoding bugs live in `dashboard.js`. The machine files load
+**before** `dashboard.js` (plain `<script>` tags, in that order).
 
-Trade-off vs Phase 1: Phase 2 is hands-off (no laptop) and "always on", but needs a
-cloud host with a public IP and requires reconfiguring the converter. Phase 1 stays
-as the free fallback.
+---
 
-#### Free hosting options for the Phase 2 server
-The server must have a **real public IP and an open raw TCP port** (the converter
-dials in with raw TCP — so Render / Cloudflare / ngrok do *not* fit the no-laptop
-case). These free clouds do:
+## 4. Run locally
 
-| Option | Free? | Notes |
-|---|---|---|
-| **Oracle Cloud "Always Free"** ⭐ recommended | Free forever | Real VM (ARM Ampere up to 4 CPU/24 GB, or small AMD), 10 TB/mo egress, open any port via the security list. Best fit. |
-| **Google Cloud "Always Free"** | Free forever | 1× `e2-micro` VM in US regions, ~1 GB/mo egress (fine for one CAN stream + a few viewers). |
-| **AWS / Azure free tier** | Free for 12 months | `t3.micro` etc.; starts charging after a year. |
-| **Fly.io** | Small free allowance | Supports raw TCP + public IP; light use only. |
+```bash
+pip install -r requirements.txt
+# Phase-1 relay (the cloud component, but runnable locally):
+ADMIN_PASSWORD=test123 FEED_TOKEN=dev PORT=8080 python relay_server.py
+# open http://localhost:8080  (dashboard)  and  http://localhost:8080/admin
+```
 
-Notes:
-- **Card-for-verification caveat:** Oracle / Google / AWS require a credit or debit
-  card at signup for identity verification only — **not charged** within Always-Free
-  limits. There is no trustworthy "public-TCP, no-card, forever-free" host for this.
-- **Data is tiny:** one CAN stream is a few GB/month at most — well inside every free
-  tier (Oracle's 10 TB/mo is far more than needed).
-- Tools like ngrok/Cloudflare Tunnel avoid the card but must run on a local machine,
-  which re-introduces the laptop and defeats Phase 2's purpose.
+On Windows PowerShell, set env vars first: `$env:ADMIN_PASSWORD="test123"` etc.
 
-### Phase 2+ (scale, from the upgrade table above)
-Go agent/listener (single binary), MQTT + Grafana for many machines, optional UI
-framework. Permanent fixed URL via a named Cloudflare tunnel (Phase 1) or the VPS
-domain (Phase 2).
+To drive it with live CAN, run the agent on the laptop wired to the converter (§5). The
+all-in-one `server.py` (no cloud) is an alternative for laptop-only use (§8).
+
+`GET /health` returns a JSON status incl. a `version` field — handy to confirm a deploy.
+
+---
+
+## 5. The laptop agent
+
+Set these (in `START_AGENT.bat`, which is **gitignored** because it holds the secret):
+
+```
+RELAY_URL  = wss://machine-log-viewer-kcx3.onrender.com/feed
+FEED_TOKEN = <the same secret set in Render>
+CAN_HOST   = 192.168.1.125            (the converter)
+DRIVE_FOLDER_ID = <Google Drive folder>   (optional; also settable from the website)
+```
+
+Then `python agent.py`. The agent:
+- reads TCP 1001-4001, decodes the 69-byte frames, streams JSON to the relay;
+- logs **always-on** per machine/day: `M{id}_{Name}_{YYYY-MM-DD}_raw.txt` / `_decoded.csv`
+  (IST timestamps; ms in a separate `Millis` column). Files roll at midnight IST and are
+  uploaded to Google Drive via **rclone**; the day's open files re-sync every ~10 min.
+- answers the website's log list/download requests over the live feed.
+
+---
+
+## 6. Admin page — spec-driven decoding
+
+`/admin` (password-gated by the `ADMIN_PASSWORD` env var; **disabled** if unset, never
+silently open) lets an admin upload the **CAN Communication Plan** Excel and manage how
+frames are decoded — instead of editing maps in code.
+
+Flow: **upload `.xlsx` → parse → review machine-wise → edit inline → Save**.
+`can_spec.py` parses the workbook into a config: global Function IDs (`All FunctionIDs`
+sheet), per-machine **identifiers** (`Identifiers` sheet), and per-machine **frames** from
+the master `Frame For All Machines` sheet — each frame carrying `fn`, `can_id`, src/dst +
+derived addresses, `dlc`, `ack`, and the **DB0..DB11 data-byte layout**.
+
+**Where it's stored / how it persists:** on Save the relay forwards the config to the
+laptop agent, which persists `can_config.json` **on the laptop** (durable) and decodes
+with it live (no restart — name maps are looked up per frame). On reconnect the agent
+sends the config back up, so the relay recovers it automatically after a redeploy
+(Render's disk is ephemeral; the laptop is the source of truth). `can_config.json` is
+gitignored on both sides; the admin page also offers **Download JSON**.
+
+**Scope today:** the config overrides the address/function **name** maps. The numeric
+byte scaling in the decoders is still keyed by function ID in code (deriving full scaling
+from the Excel is a future step).
+
+---
+
+## 7. Deploy (Render — Phase 1)
+
+Auto-deploys on push to **`main`** (the GitHub App must have repo access).
+
+- Build: `pip install -r requirements.txt`  ·  Start: `python relay_server.py`
+- Env (Dashboard → Environment, both `sync:false`):
+  - `FEED_TOKEN` — shared secret the agent uses to authorize to `/feed`.
+  - `ADMIN_PASSWORD` — password for `/admin` (omit to disable the admin page).
+- Free tier sleeps after 15 min idle → an UptimeRobot HTTPS monitor pings `/health`
+  every 5 min (the always-on agent also keeps it awake while connected).
+- Verify a deploy via the `version` field in `/health`.
+
+Secrets stay **out of git**: `agent.py` defaults are placeholders; the real token lives
+only in the laptop's gitignored `START_AGENT.bat`.
+
+---
+
+## 8. Remote access without the cloud (laptop + Cloudflare tunnel)
+
+`server.py` serves the dashboard **and** the live data on one port (8080) directly from the
+laptop. Expose it with a quick tunnel:
+
+```bash
+python server.py
+cloudflared tunnel --url http://localhost:8080      # prints a public https URL
+```
+
+The quick-tunnel URL is **temporary** (changes each restart) and **public** (no login).
+Local viewing also works at `http://localhost:8080` or `http://<laptop-LAN-ip>:8080`.
+For a permanent URL, use a free Cloudflare account + a named tunnel.
+
+---
+
+## 9. Phase 2 (no laptop) — DigitalOcean / Oracle handoff
+
+**Goal:** remove the laptop. Put the converter in **TCP-Client** mode so it dials OUT
+through the factory router to a cloud VM with a **public IP and open raw-TCP ports** (Render
+only accepts HTTP, so it can't be the Phase-2 host). The VM decodes and serves the same
+dashboard, 24×7.
+
+```
+  Browser ──HTTPS/WSS──► [ VM, PUBLIC IP ] tcp_server.py (decode + dashboard, one process)
+                                ▲ raw TCP, OUTBOUND from the factory (NAT, no port-forwarding)
+                         UT-6504-FD (TCP Client) ── factory router ── Internet
+```
+
+- **`tcp_server.py`** lives on the **`phase2` branch**: listens on raw TCP
+  **9001→m1, 9002→m2, 9003→m3, 9004→m4**, decodes the 69-byte frames (same logic as the
+  agent), serves `GET /` + `WS /ws` + `GET /health` on `:8080`. Tested with a mock converter.
+- **Deploy tasks:** provision an Ubuntu Droplet (smallest size — data is a few GB/mo) with a
+  reserved public IP; run `tcp_server.py` under **systemd** (auto-start/restart); open
+  inbound TCP **9001-9004** (ideally locked to the factory's public IP) and **80/443**;
+  terminate TLS with Caddy/Nginx → `localhost:8080` (the dashboard auto-uses same-origin
+  `wss://`). Converter: set each channel to TCP-Client, Remote IP = VM, Remote port =
+  9001-9004, fixed 69-byte packing. Outbound-only ⇒ works behind ISP CGNAT, no port-forward.
+- **Open items for the DevOps engineer:** port the always-on logging + Drive upload (today
+  in `agent.py`) to the server with persistent storage (DO Volume/Spaces and/or rclone to
+  Drive); add auth (login or IP allow-list) before exposing a public domain; uptime
+  monitoring + backups/retention.
+- **Free-VM alternative:** Oracle Cloud "Always Free" gives a forever-free VM with a public
+  IP and open ports (card required for identity verification only — Always-Free isn't
+  charged). Google Cloud Always Free `e2-micro` also works for one stream.
+
+Phase 1 (laptop → Render) keeps running unchanged until Phase 2 is verified — no downtime.
+
+---
+
+## 10. Upgrade path (when/if this grows)
+
+| When you hit this | Upgrade to |
+|---|---|
+| Agent must run 24/7 without Python on the gateway PC | Rewrite `agent.py` in **Go** → a single auto-starting `.exe`; the frame format + JSON contract stay identical, so the relay/dashboard don't change. |
+| `dashboard.js` gets hard to maintain | Move the UI to a component framework (**Svelte** preferred for a small bundle, or React); keep the `/ws` JSON contract. |
+| Many machines / customers / history / alerting | Standard IoT stack: agent → **MQTT**, visualize in **Grafana** (or ThingsBoard / Node-RED). |
+| Permanent fixed URL / no laptop | Named **Cloudflare tunnel** (Phase 1) or the Phase-2 VPS domain. |
+
+**Priority if productizing:** Go agent (reliability) → MQTT+Grafana (scale) → UI framework.
+
+---
+
+## 11. Reference facts
+
+- **Stack:** Python 3 + `aiohttp` (async) + `openpyxl` (Excel parsing). Frontend is plain
+  HTML/CSS/JS with Chart.js from a CDN — no build step.
+- **Converter:** UTEK UT-6504-FD, frame = fixed **69 bytes** (1 info + 4 CAN ID + 64 data).
+- **Machine → TCP port:** Phase 1 = 1001/2001/3001/4001; Phase 2 = 9001-9004.
+- **CAN ID encoding:** extended 29-bit; FI = bits 23-16, DestAddr = 15-8, SrcAddr = 7-0.
+- **Timestamps:** IST (UTC+5:30).
+- **Scaling:** current = ADC × 0.00672 A; voltage = ADC × 0.017 V.
+- **Branches:** `main` = live Phase 1; `phase2` = `tcp_server.py` for the no-laptop server.
+```
