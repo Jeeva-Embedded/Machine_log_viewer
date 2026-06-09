@@ -14,6 +14,8 @@ proxy_err.txt
 logs/
 # website-set Google Drive folder (per-laptop runtime config)
 drive_folder.txt
+# admin-saved CAN decode config (relay runtime state; ephemeral on Render)
+can_config.json
 
 # python
 __pycache__/

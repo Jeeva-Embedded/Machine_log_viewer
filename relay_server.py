@@ -15,17 +15,40 @@ import json
 import base64
 import asyncio
 import uuid
+import hmac
+import tempfile
 from aiohttp import web, WSMsgType
 
-FEED_TOKEN = os.environ.get('FEED_TOKEN', 'change-me-please')
-PORT       = int(os.environ.get('PORT', '8080'))
-HTML_FILE  = 'Textile_FDCAN_Monitor.html'
+import can_spec
+
+FEED_TOKEN     = os.environ.get('FEED_TOKEN', 'change-me-please')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')   # empty = admin page disabled
+PORT           = int(os.environ.get('PORT', '8080'))
+HTML_FILE      = 'Textile_FDCAN_Monitor.html'
+ADMIN_FILE     = 'admin.html'
+CONFIG_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'can_config.json')
+MAX_UPLOAD     = 10 * 1024 * 1024   # 10 MB cap on the uploaded .xlsx
 
 viewers = set()
 last_by_key = {}          # latest frame per machine (snapshot for new viewers)
 agent_ws = None           # the laptop agent connection
 manifest = []             # latest log-file list from the agent
 pending = {}              # req_id -> {'future':Future, 'chunks':[]}
+
+# Admin: the saved CAN-plan decode config (None until an admin saves one).
+# NOTE: Render's free disk is EPHEMERAL — can_config.json is lost on redeploy.
+# Fine for this first slice (admin page only). The next slice pushes the config
+# to the laptop agent (like set_drive_folder -> drive_folder.txt in agent.py),
+# where it both persists and drives live decoding.
+can_config = None
+def _load_config():
+    global can_config
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, encoding='utf-8') as f:
+                can_config = json.load(f)
+    except Exception as e:
+        print(f"[admin] could not load {CONFIG_FILE}: {e}")
 
 
 async def index(request):
@@ -36,9 +59,11 @@ async def index(request):
 
 
 async def health(request):
-    return web.json_response({'status': 'ok', 'version': 'v3-autodeploy',
+    return web.json_response({'status': 'ok', 'version': 'v4-admin',
                               'viewers': len(viewers),
                               'agent_connected': agent_ws is not None,
+                              'admin_enabled': bool(ADMIN_PASSWORD),
+                              'has_config': can_config is not None,
                               'log_files': len(manifest)})
 
 
@@ -68,6 +93,106 @@ async def api_log(request):
     return web.Response(body=data, headers={
         'Content-Disposition': f'attachment; filename="{os.path.basename(name)}"',
         'Content-Type': 'application/octet-stream'})
+
+
+# ── Admin: upload + parse + edit + save the CAN Communication Plan ─────────────
+def _admin_ok(request):
+    """True if the request carries the correct admin password.
+
+    Admin is DISABLED unless ADMIN_PASSWORD is set, so the page is never silently
+    open. The page sends the password in the X-Admin-Token header.
+    """
+    if not ADMIN_PASSWORD:
+        return False
+    tok = request.headers.get('X-Admin-Token', '')
+    return hmac.compare_digest(tok, ADMIN_PASSWORD)
+
+
+async def admin_index(request):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ADMIN_FILE)
+    if not os.path.exists(path):
+        return web.Response(text=f"{ADMIN_FILE} not found", status=404)
+    return web.FileResponse(path)
+
+
+async def admin_login(request):
+    if not ADMIN_PASSWORD:
+        return web.json_response({'ok': False, 'error': 'admin not configured'}, status=503)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    pw = body.get('password', '')
+    if hmac.compare_digest(pw, ADMIN_PASSWORD):
+        return web.json_response({'ok': True})
+    return web.json_response({'ok': False, 'error': 'wrong password'}, status=401)
+
+
+async def admin_upload(request):
+    """Receive an .xlsx, parse it, return {config, warnings}. Does NOT persist."""
+    if not ADMIN_PASSWORD:
+        return web.json_response({'error': 'admin not configured'}, status=503)
+    if not _admin_ok(request):
+        return web.json_response({'error': 'unauthorized'}, status=401)
+    reader = await request.multipart()
+    field = await reader.next()
+    if field is None or field.name != 'file':
+        return web.json_response({'error': 'no file field'}, status=400)
+    filename = field.filename or 'upload.xlsx'
+    if not filename.lower().endswith('.xlsx'):
+        return web.json_response({'error': 'please upload an .xlsx file'}, status=400)
+    size = 0
+    tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+    try:
+        while True:
+            chunk = await field.read_chunk()
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_UPLOAD:
+                return web.json_response({'error': 'file too large (max 10 MB)'}, status=413)
+            tmp.write(chunk)
+        tmp.close()
+        try:
+            cfg = await asyncio.get_event_loop().run_in_executor(None, can_spec.parse_plan, tmp.name)
+        except Exception as e:
+            return web.json_response({'error': f'could not parse: {e}'}, status=400)
+        # version is detected from the filename, but parse ran on a temp path —
+        # re-derive both from the real uploaded name.
+        cfg['source_file'] = os.path.basename(filename)
+        cfg['version'] = can_spec._detect_version(filename)
+        return web.json_response({'config': cfg, 'warnings': cfg.get('warnings', [])})
+    finally:
+        try: os.unlink(tmp.name)
+        except OSError: pass
+
+
+async def admin_get_config(request):
+    if not _admin_ok(request):
+        return web.json_response({'error': 'unauthorized'}, status=401)
+    return web.json_response({'config': can_config})
+
+
+async def admin_save_config(request):
+    global can_config
+    if not _admin_ok(request):
+        return web.json_response({'error': 'unauthorized'}, status=401)
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({'error': 'invalid JSON'}, status=400)
+    cfg = body.get('config')
+    if not isinstance(cfg, dict) or 'machines' not in cfg or 'function_ids' not in cfg:
+        return web.json_response({'error': 'config must have function_ids and machines'}, status=400)
+    cfg['saved_at'] = can_spec.datetime.now(can_spec.IST).isoformat(timespec='seconds')
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return web.json_response({'error': f'could not save: {e}'}, status=500)
+    can_config = cfg
+    print(f"[admin] config saved ({len(cfg.get('function_ids', []))} function ids)")
+    return web.json_response({'ok': True, 'saved_at': cfg['saved_at']})
 
 
 async def feed_handler(request):
@@ -169,14 +294,22 @@ async def view_handler(request):
 
 
 def main():
-    app = web.Application()
+    _load_config()
+    app = web.Application(client_max_size=MAX_UPLOAD + 1024 * 1024)
     app.router.add_get('/', index)
     app.router.add_get('/health', health)
     app.router.add_get('/api/logs', api_logs)
     app.router.add_get('/api/log', api_log)
     app.router.add_get('/feed', feed_handler)
     app.router.add_get('/ws', view_handler)
-    print(f"Relay on :{PORT}  (token set: {FEED_TOKEN != 'change-me-please'})")
+    # admin page (CAN Communication Plan upload/parse/edit/save)
+    app.router.add_get('/admin', admin_index)
+    app.router.add_post('/api/admin/login', admin_login)
+    app.router.add_post('/api/admin/upload', admin_upload)
+    app.router.add_get('/api/admin/config', admin_get_config)
+    app.router.add_post('/api/admin/config', admin_save_config)
+    print(f"Relay on :{PORT}  (token set: {FEED_TOKEN != 'change-me-please'}, "
+          f"admin: {'on' if ADMIN_PASSWORD else 'OFF'})")
     web.run_app(app, host='0.0.0.0', port=PORT)
 
 

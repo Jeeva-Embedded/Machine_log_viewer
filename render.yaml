@@ -1,0 +1,14 @@
+# Render Blueprint — auto-configures the cloud relay+website.
+# In Render: New +  ->  Blueprint  ->  pick your GitHub repo  ->  Apply.
+services:
+  - type: web
+    name: textile-can-monitor
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python relay_server.py
+    envVars:
+      - key: FEED_TOKEN
+        sync: false      # you type a secret here in the Render dashboard
+      - key: ADMIN_PASSWORD
+        sync: false      # admin page password (leave unset to disable /admin)

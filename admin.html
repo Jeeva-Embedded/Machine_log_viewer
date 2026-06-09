@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · CAN Communication Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#7dba3a;--primary-d:#5f9a22;--primary-light:#eafad1;
+  --accent:#2471a3;--navy:#1a5276;--navy-d:#122c42;
+  --orange:#d97706;--danger:#c0392b;
+  --bg:#f4f6f8;--card:#fff;--text:#1a2733;--muted:#5d6b7a;
+  --border:#dde3ea;--shadow:0 1px 3px rgba(0,0,0,.07),0 1px 8px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.10);--topbar-h:60px;--side-w:216px;
+}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;font-size:13px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);background:#fff;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;
+  z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.topbar-logo{width:40px;height:28px;background:var(--navy);border-radius:7px;display:flex;
+  align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;}
+.topbar-name{font-size:15px;font-weight:800;}
+.topbar-name span{color:var(--primary);}
+.topbar-divider{width:1px;height:24px;background:var(--border);}
+.topbar-page{font-size:13px;font-weight:600;color:var(--muted);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.pill{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;}
+.pill-admin{background:var(--navy);color:#fff;}
+.link-home{font-size:12px;font-weight:600;color:var(--muted);}
+.link-home:hover{color:var(--navy);}
+.btn-back{font-size:12px;font-weight:700;color:var(--navy);background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;}
+.btn-back:hover{background:#eaeef2;}
+
+/* left sidebar (navigation) */
+.side{position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--side-w);background:var(--navy);
+  display:flex;flex-direction:column;z-index:90;padding:14px 10px;}
+.side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:rgba(255,255,255,.35);padding:6px 10px 8px;}
+.side-link{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;
+  border-radius:9px;border:none;background:none;color:rgba(255,255,255,.78);font-size:13px;font-weight:600;
+  margin-bottom:3px;transition:all .15s;}
+.side-link:hover{background:rgba(255,255,255,.09);color:#fff;}
+.side-link.active{background:var(--primary);color:#fff;}
+.side-link .ic{font-size:15px;width:18px;text-align:center;}
+.side-foot{margin-top:auto;padding:10px;color:rgba(255,255,255,.3);font-size:11px;line-height:1.5;}
+
+/* login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:#fff;border-radius:16px;box-shadow:var(--shadow-md);padding:36px 32px;
+  width:100%;max-width:380px;text-align:center;animation:fadeIn .3s;}
+.login-logo{width:54px;height:54px;background:var(--navy);border-radius:12px;display:flex;
+  align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;margin:0 auto 16px;}
+.login-card h1{font-size:20px;font-weight:800;margin-bottom:4px;}
+.login-card p{font-size:13px;color:var(--muted);margin-bottom:22px;}
+.login-card input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;
+  font-size:15px;margin-bottom:12px;}
+.login-card input:focus{outline:none;border-color:var(--primary);}
+.btn{border:none;border-radius:10px;font-weight:700;font-size:14px;padding:11px 18px;transition:all .15s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-d);}
+.btn-block{width:100%;}
+.login-err{color:var(--danger);font-size:13px;font-weight:600;min-height:18px;margin-top:6px;}
+
+/* panel */
+.wrap{margin-top:var(--topbar-h);margin-left:var(--side-w);padding:24px;padding-bottom:96px;}
+.hidden{display:none!important;}
+.section{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);
+  margin-bottom:18px;overflow:hidden;}
+.section-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  gap:10px;flex-wrap:wrap;}
+.section-head h2{font-size:15px;font-weight:800;}
+.section-head .count{font-size:12px;font-weight:700;color:var(--muted);background:var(--bg);
+  padding:2px 9px;border-radius:99px;}
+.section-body{padding:16px 18px;}
+
+/* upload row */
+.upload-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.upload-row input[type=file]{font-size:13px;}
+.meta{font-size:12px;color:var(--muted);margin-top:8px;}
+.meta b{color:var(--text);}
+.warn-banner{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;
+  padding:10px 14px;font-size:12.5px;margin-top:12px;}
+.warn-banner ul{margin:4px 0 0 18px;}
+
+/* tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.tab{padding:8px 16px;border-radius:10px;border:1px solid var(--border);background:#fff;
+  font-weight:700;font-size:13px;color:var(--muted);}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+/* tables */
+.tbl-title{font-size:13px;font-weight:800;color:var(--navy);margin:6px 0 8px;text-transform:uppercase;
+  letter-spacing:.5px;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;padding:6px 8px;border-bottom:2px solid var(--border);}
+td{padding:3px 6px;border-bottom:1px solid #eef1f4;}
+td input{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;
+  padding:6px 8px;font-size:13px;}
+td input:hover{border-color:var(--border);}
+td input:focus{outline:none;border-color:var(--primary);background:#fff;}
+.col-hex input{font-family:ui-monospace,Menlo,Consolas,monospace;}
+.row-del{border:none;background:none;color:var(--danger);font-size:16px;font-weight:700;
+  padding:2px 8px;border-radius:6px;opacity:.5;}
+.row-del:hover{opacity:1;background:#fdecea;}
+.btn-add{margin-top:8px;background:var(--primary-light);color:var(--primary-d);border:1px dashed var(--primary);
+  border-radius:8px;font-weight:700;font-size:12px;padding:7px 14px;}
+.btn-add:hover{background:#dff0c4;}
+.empty{color:var(--muted);font-size:13px;padding:14px 4px;font-style:italic;}
+
+/* frames table can be wide (many data bytes) -> horizontal scroll */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px;}
+.frames-tbl{min-width:100%;}
+.frames-tbl th,.frames-tbl td{white-space:nowrap;}
+.frames-tbl td input{min-width:90px;}
+.frames-tbl .col-hex input{min-width:84px;}
+.frames-tbl .col-db input{min-width:96px;background:#fbfcfd;}
+.frames-tbl th{background:#fafbfc;position:sticky;top:0;}
+.frames-tbl thead th:nth-child(n+8){color:var(--accent);}  /* DB columns */
+
+/* footer */
+.footer{position:fixed;bottom:0;left:var(--side-w);right:0;background:#fff;border-top:1px solid var(--border);
+  padding:12px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 -2px 10px rgba(0,0,0,.05);z-index:95;}
+.btn-outline{background:#fff;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{background:var(--bg);}
+.toast{font-size:13px;font-weight:600;}
+.toast.ok{color:var(--primary-d);}
+.toast.err{color:var(--danger);}
+.spacer{flex:1;}
+.hint{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">G4</div>
+    <h1>Admin Access</h1>
+    <p>CAN Communication Plan management</p>
+    <input id="pw" type="password" placeholder="Admin password" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Enter</button>
+    <div id="login-err" class="login-err"></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel" class="hidden">
+  <nav class="topbar">
+    <button class="btn-back" onclick="goBack()">← Back</button>
+    <div class="topbar-logo">G4</div>
+    <div class="topbar-name">Gen4 <span>Admin</span></div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-page">CAN Communication Plan</div>
+    <div class="topbar-right">
+      <span class="pill pill-admin">ADMIN</span>
+    </div>
+  </nav>
+
+  <!-- left navigation -->
+  <aside class="side">
+    <div class="side-label">Workspace</div>
+    <a class="side-link" href="/"><span class="ic">🏠</span> Home</a>
+    <a class="side-link" href="/"><span class="ic">📊</span> Dashboard</a>
+    <a class="side-link active" href="/admin"><span class="ic">🛠️</span> CAN Plan Admin</a>
+    <div class="side-foot">Gen4 Industrial IoT<br>Textile CAN Monitor</div>
+  </aside>
+
+  <div class="wrap">
+    <!-- upload -->
+    <div class="section">
+      <div class="section-head"><h2>1 · Upload Plan</h2></div>
+      <div class="section-body">
+        <div class="upload-row">
+          <input id="file" type="file" accept=".xlsx">
+          <button class="btn btn-primary" onclick="doUpload()">⬆ Parse &amp; Preview</button>
+          <span id="up-status" class="hint"></span>
+        </div>
+        <div id="meta" class="meta hidden"></div>
+        <div id="warns" class="warn-banner hidden"></div>
+      </div>
+    </div>
+
+    <!-- function ids -->
+    <div class="section" id="sec-fn">
+      <div class="section-head"><h2>2 · Function IDs</h2><span class="count" id="fn-count">0</span></div>
+      <div class="section-body">
+        <table>
+          <thead><tr><th style="width:120px">ID (hex)</th><th>Name</th><th>Machines</th><th style="width:40px"></th></tr></thead>
+          <tbody id="fn-body"></tbody>
+        </table>
+        <button class="btn-add" onclick="addFn()">+ Add function</button>
+      </div>
+    </div>
+
+    <!-- machines -->
+    <div class="section" id="sec-machines">
+      <div class="section-head"><h2>3 · Machines</h2><span class="hint">Identifiers &amp; frames per machine</span></div>
+      <div class="section-body">
+        <div class="tabs" id="tabs"></div>
+        <div id="machine-pane"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="hint">Edits are local until you Save.</span>
+    <span class="spacer"></span>
+    <span id="toast" class="toast"></span>
+    <button class="btn btn-outline" onclick="downloadJson()">⬇ Download JSON</button>
+    <button class="btn btn-primary" onclick="saveConfig()">💾 Save</button>
+  </div>
+</div>
+
+<script>
+let TOKEN = '';        // admin password, kept in memory only
+let CFG = null;        // the working config object
+let CURMID = '1';
+
+const $ = id => document.getElementById(id);
+
+function goBack(){
+  if(document.referrer && new URL(document.referrer).origin === location.origin){ history.back(); }
+  else { location.href = '/'; }
+}
+
+function api(path, opts={}){
+  opts.headers = Object.assign({'X-Admin-Token': TOKEN}, opts.headers||{});
+  return fetch(path, opts);
+}
+function toast(msg, ok=true){
+  const t = $('toast'); t.textContent = msg; t.className = 'toast ' + (ok?'ok':'err');
+  if(msg) setTimeout(()=>{ if(t.textContent===msg){t.textContent='';} }, 4000);
+}
+
+/* ── login ── */
+async function doLogin(){
+  const pw = $('pw').value;
+  $('login-err').textContent = '';
+  if(!pw){ $('login-err').textContent = 'Enter the password'; return; }
+  try{
+    const r = await fetch('/api/admin/login', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw})});
+    const j = await r.json();
+    if(r.ok && j.ok){
+      TOKEN = pw;
+      $('login').classList.add('hidden');
+      $('panel').classList.remove('hidden');
+      loadSaved();
+    } else {
+      $('login-err').textContent = j.error || 'Login failed';
+    }
+  }catch(e){ $('login-err').textContent = 'Server error'; }
+}
+
+/* ── load existing saved config (if any) ── */
+async function loadSaved(){
+  try{
+    const r = await api('/api/admin/config');
+    const j = await r.json();
+    if(j.config){ CFG = j.config; render(); toast('Loaded saved config'); }
+  }catch(e){}
+}
+
+/* ── upload + parse ── */
+async function doUpload(){
+  const f = $('file').files[0];
+  if(!f){ $('up-status').textContent = 'Choose an .xlsx file first'; return; }
+  $('up-status').textContent = 'Parsing…';
+  const fd = new FormData(); fd.append('file', f);
+  try{
+    const r = await api('/api/admin/upload', {method:'POST', body: fd});
+    const j = await r.json();
+    if(!r.ok){ $('up-status').textContent = j.error || 'Upload failed'; return; }
+    CFG = j.config; render();
+    $('up-status').textContent = 'Parsed ✓';
+    toast('Parsed — review and Save');
+  }catch(e){ $('up-status').textContent = 'Error: '+e; }
+}
+
+/* ── render everything ── */
+function render(){
+  if(!CFG) return;
+  // meta
+  const m = $('meta'); m.classList.remove('hidden');
+  m.innerHTML = `Source: <b>${esc(CFG.source_file||'—')}</b> · Version: <b>${esc(CFG.version||'—')}</b>`
+    + ` · Parsed: <b>${esc(CFG.parsed_at||'—')}</b>` + (CFG.saved_at? ` · Saved: <b>${esc(CFG.saved_at)}</b>`:'');
+  // warnings
+  const w = $('warns');
+  if(CFG.warnings && CFG.warnings.length){
+    w.classList.remove('hidden');
+    w.innerHTML = '<b>Parser notes:</b><ul>' + CFG.warnings.map(x=>`<li>${esc(x)}</li>`).join('') + '</ul>';
+  } else { w.classList.add('hidden'); }
+  renderFns();
+  renderTabs();
+  renderMachine();
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* function ids */
+function renderFns(){
+  CFG.function_ids = CFG.function_ids || [];
+  $('fn-count').textContent = CFG.function_ids.length;
+  const b = $('fn-body'); b.innerHTML = '';
+  CFG.function_ids.forEach((fn, i)=>{
+    const tr = document.createElement('tr');
+    tr.appendChild(cellInput(fn,'id','col-hex'));
+    tr.appendChild(cellInput(fn,'name'));
+    tr.appendChild(cellInput(fn,'machines'));
+    tr.appendChild(delCell(()=>{ CFG.function_ids.splice(i,1); renderFns(); }));
+    b.appendChild(tr);
+  });
+}
+function addFn(){ CFG=CFG||blankCfg(); CFG.function_ids.push({id:'0x',name:'',machines:''}); renderFns(); }
+
+/* machine tabs */
+function renderTabs(){
+  const t = $('tabs'); t.innerHTML = '';
+  Object.keys(CFG.machines).sort().forEach(mid=>{
+    const mc = CFG.machines[mid];
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (mid===CURMID?' active':'');
+    btn.textContent = `M${mid} · ${mc.name||''}`;
+    btn.onclick = ()=>{ CURMID = mid; renderTabs(); renderMachine(); };
+    t.appendChild(btn);
+  });
+}
+
+/* machine pane = identifiers + frames */
+function renderMachine(){
+  const mc = CFG.machines[CURMID];
+  const pane = $('machine-pane');
+  if(!mc){ pane.innerHTML = '<div class="empty">No data for this machine.</div>'; return; }
+  mc.identifiers = mc.identifiers || [];
+  mc.frames = mc.frames || [];
+  pane.innerHTML = '';
+
+  // identifiers
+  const idTitle = document.createElement('div'); idTitle.className='tbl-title';
+  idTitle.textContent = 'Identifiers (drive → address)'; pane.appendChild(idTitle);
+  const idTbl = mkTable(['Drive Name','Address (hex)','']);
+  mc.identifiers.forEach((it,i)=>{
+    const tr = document.createElement('tr');
+    tr.appendChild(cellInput(it,'name'));
+    tr.appendChild(cellInput(it,'addr','col-hex'));
+    tr.appendChild(delCell(()=>{ mc.identifiers.splice(i,1); renderMachine(); }));
+    idTbl.tBodies[0].appendChild(tr);
+  });
+  pane.appendChild(idTbl);
+  pane.appendChild(addBtn('+ Add identifier', ()=>{ mc.identifiers.push({name:'',addr:'0x'}); renderMachine(); }));
+
+  // frames (with the DB0..DBn data-byte layout — "what data is sent")
+  const frTitle = document.createElement('div'); frTitle.className='tbl-title';
+  frTitle.style.marginTop = '18px';
+  frTitle.textContent = 'Frames (type · function · source → destination · data bytes)';
+  pane.appendChild(frTitle);
+
+  // widest data row on this machine decides how many DB columns to show
+  let maxDb = 0;
+  mc.frames.forEach(fr=>{ fr.data = fr.data || []; if(fr.data.length>maxDb) maxDb = fr.data.length; });
+  if(maxDb < 1) maxDb = 1;
+
+  const dbHeaders = []; for(let k=0;k<maxDb;k++) dbHeaders.push('DB'+k);
+  const headers = ['Frame Type','FN','CAN ID','Source','Dest','DLC','ACK', ...dbHeaders, ''];
+  const frTbl = mkTable(headers);
+  frTbl.classList.add('frames-tbl');
+  mc.frames.forEach((fr,i)=>{
+    fr.data = fr.data || [];
+    const tr = document.createElement('tr');
+    tr.appendChild(cellInput(fr,'frame'));
+    tr.appendChild(cellInput(fr,'fn','col-hex'));
+    tr.appendChild(cellInput(fr,'can_id','col-hex'));
+    tr.appendChild(cellInput(fr,'src'));
+    tr.appendChild(cellInput(fr,'dst'));
+    tr.appendChild(cellInput(fr,'dlc','col-hex'));
+    tr.appendChild(cellInput(fr,'ack'));
+    for(let k=0;k<maxDb;k++) tr.appendChild(dbCell(fr, k));
+    tr.appendChild(delCell(()=>{ mc.frames.splice(i,1); renderMachine(); }));
+    frTbl.tBodies[0].appendChild(tr);
+  });
+  const scroller = document.createElement('div'); scroller.className='tbl-scroll';
+  scroller.appendChild(frTbl); pane.appendChild(scroller);
+  pane.appendChild(addBtn('+ Add frame', ()=>{
+    mc.frames.push({frame:'',fn:'0x',can_id:'',src:'',src_addr:'0x',dst:'',dst_addr:'0x',
+                    dlc:'',ack:'',data:Array(maxDb).fill('')});
+    renderMachine();
+  }));
+}
+
+/* ── small DOM helpers ── */
+function cellInput(obj, key, cls){
+  const td = document.createElement('td'); if(cls) td.className = cls;
+  const inp = document.createElement('input');
+  inp.value = obj[key]==null ? '' : obj[key];
+  inp.oninput = ()=>{ obj[key] = inp.value; };
+  td.appendChild(inp); return td;
+}
+function dbCell(fr, k){
+  const td = document.createElement('td'); td.className = 'col-db';
+  const inp = document.createElement('input');
+  inp.value = (fr.data && fr.data[k]!=null) ? fr.data[k] : '';
+  inp.placeholder = '–';
+  inp.oninput = ()=>{
+    fr.data = fr.data || [];
+    while(fr.data.length <= k) fr.data.push('');
+    fr.data[k] = inp.value;
+  };
+  td.appendChild(inp); return td;
+}
+function delCell(fn){
+  const td = document.createElement('td');
+  const b = document.createElement('button'); b.className='row-del'; b.textContent='×'; b.title='Delete row';
+  b.onclick = fn; td.appendChild(b); return td;
+}
+function mkTable(headers){
+  const t = document.createElement('table');
+  const thead = document.createElement('thead'); const tr = document.createElement('tr');
+  headers.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; tr.appendChild(th); });
+  thead.appendChild(tr); t.appendChild(thead); t.appendChild(document.createElement('tbody'));
+  return t;
+}
+function addBtn(label, fn){
+  const b = document.createElement('button'); b.className='btn-add'; b.textContent=label; b.onclick=fn; return b;
+}
+function blankCfg(){ return {function_ids:[], machines:{'1':{name:'DrawFrame',identifiers:[],frames:[]}}}; }
+
+/* ── save / download ── */
+async function saveConfig(){
+  if(!CFG){ toast('Nothing to save', false); return; }
+  try{
+    const r = await api('/api/admin/config', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({config: CFG})});
+    const j = await r.json();
+    if(r.ok && j.ok){ CFG.saved_at = j.saved_at; render(); toast('Saved ✓'); }
+    else { toast(j.error || 'Save failed', false); }
+  }catch(e){ toast('Save error', false); }
+}
+function downloadJson(){
+  if(!CFG){ toast('Nothing to download', false); return; }
+  const blob = new Blob([JSON.stringify(CFG, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'can_config.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
