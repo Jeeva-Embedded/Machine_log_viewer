@@ -36,10 +36,11 @@ manifest = []             # latest log-file list from the agent
 pending = {}              # req_id -> {'future':Future, 'chunks':[]}
 
 # Admin: the saved CAN-plan decode config (None until an admin saves one).
-# NOTE: Render's free disk is EPHEMERAL — can_config.json is lost on redeploy.
-# Fine for this first slice (admin page only). The next slice pushes the config
-# to the laptop agent (like set_drive_folder -> drive_folder.txt in agent.py),
-# where it both persists and drives live decoding.
+# Render's free disk is EPHEMERAL, so this relay copy is lost on redeploy — but it
+# is NOT the source of truth. On Save we forward the config to the laptop agent,
+# which persists it durably (can_config.json) and decodes with it. When the agent
+# reconnects it sends the config back up, so the relay recovers it automatically
+# after a redeploy (see feed_handler). Relay's own can_config.json is just a cache.
 can_config = None
 def _load_config():
     global can_config
@@ -50,6 +51,15 @@ def _load_config():
     except Exception as e:
         print(f"[admin] could not load {CONFIG_FILE}: {e}")
 
+def _write_config_file(cfg):
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"[admin] could not write {CONFIG_FILE}: {e}")
+        return False
+
 
 async def index(request):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), HTML_FILE)
@@ -59,7 +69,7 @@ async def index(request):
 
 
 async def health(request):
-    return web.json_response({'status': 'ok', 'version': 'v4-admin',
+    return web.json_response({'status': 'ok', 'version': 'v5-agent-config',
                               'viewers': len(viewers),
                               'agent_connected': agent_ws is not None,
                               'admin_enabled': bool(ADMIN_PASSWORD),
@@ -185,19 +195,25 @@ async def admin_save_config(request):
     if not isinstance(cfg, dict) or 'machines' not in cfg or 'function_ids' not in cfg:
         return web.json_response({'error': 'config must have function_ids and machines'}, status=400)
     cfg['saved_at'] = can_spec.datetime.now(can_spec.IST).isoformat(timespec='seconds')
-    try:
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(cfg, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        return web.json_response({'error': f'could not save: {e}'}, status=500)
+    if not _write_config_file(cfg):
+        return web.json_response({'error': 'could not save config file'}, status=500)
     can_config = cfg
-    print(f"[admin] config saved ({len(cfg.get('function_ids', []))} function ids)")
-    return web.json_response({'ok': True, 'saved_at': cfg['saved_at']})
+    # push to the laptop agent so it persists (durably) + decodes with the new maps
+    forwarded = False
+    if agent_ws is not None:
+        try:
+            await agent_ws.send_str(json.dumps({'type': 'set_can_config', 'config': cfg}))
+            forwarded = True
+        except Exception:
+            pass
+    print(f"[admin] config saved ({len(cfg.get('function_ids', []))} function ids), "
+          f"forwarded to agent: {forwarded}")
+    return web.json_response({'ok': True, 'saved_at': cfg['saved_at'], 'agent_updated': forwarded})
 
 
 async def feed_handler(request):
     """Laptop agent: pushes live frames + manifest + file chunks."""
-    global agent_ws
+    global agent_ws, can_config
     if request.query.get('token') != FEED_TOKEN:
         return web.Response(status=403, text='bad token')
     ws = web.WebSocketResponse(heartbeat=20, max_msg_size=0)
@@ -207,6 +223,11 @@ async def feed_handler(request):
     # if viewers are already watching, tell the agent to start recording immediately
     if viewers:
         try: await ws.send_str(json.dumps({'type': 'record_start'}))
+        except Exception: pass
+    # if the relay already holds a config (admin edited it), push it DOWN so the agent
+    # adopts the authoritative copy; otherwise the agent will send ITS copy up (below).
+    if can_config is not None:
+        try: await ws.send_str(json.dumps({'type': 'set_can_config', 'config': can_config}))
         except Exception: pass
     try:
         async for msg in ws:
@@ -221,7 +242,15 @@ async def feed_handler(request):
             except Exception:
                 continue
             t = j.get('type')
-            if t == 'manifest':
+            if t == 'can_config':
+                # agent seeded us with its persisted config — adopt only if we have
+                # none (e.g. just redeployed). If we already have one, ours wins and
+                # was already pushed down on connect, so ignore this.
+                if can_config is None and isinstance(j.get('config'), dict):
+                    can_config = j['config']
+                    _write_config_file(can_config)
+                    print("[admin] adopted config from agent (post-redeploy recovery)")
+            elif t == 'manifest':
                 manifest[:] = j.get('files', [])
             elif t == 'file_chunk':
                 p = pending.get(j.get('req_id'))

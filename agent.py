@@ -89,6 +89,85 @@ MACHINE_FN = {
 CURR_GAIN = 0.00672
 VOLT_GAIN = 0.017
 
+# ── Spec-driven decode config (from the website admin / CAN Communication Plan) ──
+# When a config is present it OVERRIDES the hardcoded MACHINE_ADDR / MACHINE_FN name
+# maps, so the uploaded Excel becomes the single source of truth for addresses and
+# function names. The numeric byte decoding in csv_row() is unchanged (it keys off
+# stable function IDs). The config is persisted here on the laptop (durable) and
+# re-sent to the relay on connect, so it survives Render redeploys (Render's disk is
+# ephemeral). Flow: website Save -> relay -> agent (persist + apply); agent connect
+# -> sends config up so the relay can serve it again after a redeploy.
+_CAN_CFG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'can_config.json')
+CAN_CONFIG = None      # raw dict as saved by the admin (None = use hardcoded maps)
+_cfg_addr = {}         # {mid:int -> {addr:int -> name}}
+_cfg_fn = {}           # {fn:int -> name}  (global, from "All FunctionIDs")
+
+def _to_int(h):
+    try:
+        return int(str(h).strip().lower().replace('0x', ''), 16)
+    except (ValueError, AttributeError):
+        return None
+
+def apply_can_config(cfg):
+    """Rebuild the addr/fn override maps from a parsed config dict."""
+    global CAN_CONFIG, _cfg_addr, _cfg_fn
+    if not isinstance(cfg, dict):
+        return
+    fn = {}
+    for f in cfg.get('function_ids', []):
+        i = _to_int(f.get('id'))
+        if i is not None and f.get('name'):
+            fn[i] = f['name']
+    addr = {}
+    for mid_s, mc in (cfg.get('machines') or {}).items():
+        try:
+            mid = int(mid_s)
+        except (ValueError, TypeError):
+            continue
+        m = {}
+        # frames first (gives Motherboard 0x01 etc.), identifiers override (authoritative)
+        for fr in mc.get('frames', []):
+            for a_key, n_key in (('src_addr', 'src'), ('dst_addr', 'dst')):
+                a = _to_int(fr.get(a_key))
+                if a is not None and fr.get(n_key):
+                    m.setdefault(a, fr[n_key])
+        for it in mc.get('identifiers', []):
+            a = _to_int(it.get('addr'))
+            if a is not None and it.get('name'):
+                m[a] = it['name']
+        addr[mid] = m
+    CAN_CONFIG, _cfg_addr, _cfg_fn = cfg, addr, fn
+    print(f"[CFG] decode config applied: {len(fn)} function ids, machines {sorted(addr)}")
+
+def save_can_config(cfg):
+    """Apply + persist a config received from the website (via the relay)."""
+    apply_can_config(cfg)
+    try:
+        with open(_CAN_CFG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cfg, f, ensure_ascii=False)
+        print(f"[CFG] saved to {_CAN_CFG_FILE}")
+    except Exception as e:
+        print(f"[CFG] save failed: {e}")
+
+def load_can_config():
+    if os.path.exists(_CAN_CFG_FILE):
+        try:
+            with open(_CAN_CFG_FILE, encoding='utf-8') as f:
+                apply_can_config(json.load(f))
+        except Exception as e:
+            print(f"[CFG] load failed: {e}")
+
+def addr_name(mid, addr):
+    m = _cfg_addr.get(mid)
+    if m and addr in m:
+        return m[addr]
+    return MACHINE_ADDR.get(mid, MACHINE_ADDR[1]).get(addr, f'0x{addr:02X}')
+
+def fn_name(mid, fn):
+    if _cfg_fn and fn in _cfg_fn:
+        return _cfg_fn[fn]
+    return MACHINE_FN.get(mid, MACHINE_FN[1]).get(fn, f'FN_0x{fn:02X}')
+
 CSV_HEADER = ("Timestamp,Millis,Machine,CAN_ID,FunctionID,FunctionName,Source_Addr,Source_Board,"
     "Dest_Addr,Dest_Board,DLC_Code,Bytes,Raw_Data,"
     "TargetRPM,PresentRPM,PWM,MosfetTemp_C,MotorTemp_C,CurrentADC,CurrentA,VoltageADC,VoltageV,Power_W,"
@@ -212,8 +291,8 @@ async def drive_sync_loop():
 
 
 async def read_machine(mid, port, relay):
-    addr_map = MACHINE_ADDR.get(mid, MACHINE_ADDR[1])
-    fn_map   = MACHINE_FN.get(mid, MACHINE_FN[1])
+    # name maps are looked up per-frame via addr_name()/fn_name() so a config
+    # pushed from the website takes effect live, without restarting the agent.
     loop = asyncio.get_event_loop()
     # Keep trying to (re)connect to the converter for as long as the relay is up,
     # so a temporary converter hiccup (or stale socket) doesn't stop a machine forever.
@@ -246,9 +325,9 @@ async def read_machine(mid, port, relay):
                         can_id, fn, dst, src = decode_id(raw_id)
                         data = list(frame[5:5 + nb])
                         data_hex = ' '.join(f'{b:02X}' for b in data)
-                        fn_n  = fn_map.get(fn, f'FN_0x{fn:02X}')
-                        src_n = addr_map.get(src, f'0x{src:02X}')
-                        dst_n = addr_map.get(dst, f'0x{dst:02X}')
+                        fn_n  = fn_name(mid, fn)
+                        src_n = addr_name(mid, src)
+                        dst_n = addr_name(mid, dst)
                         # 1) push live to relay
                         msg = {'machine': mid, 'ts': ts, 'can_id': f'0x{can_id:08X}',
                                'fn': fn, 'fn_name': fn_n, 'src': src, 'src_name': src_n,
@@ -343,6 +422,8 @@ async def recv_control(relay):
                 await send_file(relay, j.get('req_id'), j.get('name', ''))
             elif t == 'set_drive_folder':
                 set_drive_folder(j.get('folder_id', ''))
+            elif t == 'set_can_config':
+                save_can_config(j.get('config'))
             # record_start / record_stop from the relay are ignored — logging is always-on now
         elif m.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
             break
@@ -350,6 +431,7 @@ async def recv_control(relay):
 
 async def run():
     os.makedirs(LOG_DIR, exist_ok=True)
+    load_can_config()
     url = f"{RELAY_URL}?token={FEED_TOKEN}"
     print("=" * 58)
     print("  Textile CAN Monitor — Laptop Agent")
@@ -364,6 +446,12 @@ async def run():
             async with aiohttp.ClientSession() as s:
                 async with s.ws_connect(url, heartbeat=20, max_msg_size=0) as relay:
                     print("[+] Connected to relay — streaming + logging...")
+                    # seed the relay with our config so it survives Render redeploys
+                    if CAN_CONFIG is not None:
+                        try:
+                            await relay.send_str(json.dumps({'type': 'can_config', 'config': CAN_CONFIG}))
+                        except Exception:
+                            pass
                     tasks = [asyncio.create_task(read_machine(mid, port, relay))
                              for mid, port in MACHINES.items()]
                     tasks.append(asyncio.create_task(recv_control(relay)))
