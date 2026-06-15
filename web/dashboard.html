@@ -710,6 +710,48 @@
         </div>
 
       </div>
+
+      <!-- LIFT SEESAW VISUALIZER -->
+      <div id="lift-viz-panel" style="margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;margin-bottom:12px;">BOBBIN RAIL POSITION</div>
+        <div style="display:flex;align-items:flex-end;gap:24px;">
+          <!-- seesaw SVG -->
+          <svg id="lift-seesaw-svg" viewBox="0 0 260 180" style="flex:1;max-width:320px;min-width:160px;height:auto;display:block;">
+            <!-- track backgrounds -->
+            <rect x="40" y="10" width="34" height="140" rx="4" fill="var(--border)" opacity=".5"/>
+            <rect x="186" y="10" width="34" height="140" rx="4" fill="var(--border)" opacity=".5"/>
+            <!-- fill bars (height updated by JS, anchored at bottom y=150) -->
+            <rect id="viz-ll-bar" x="40" y="150" width="34" height="0" rx="4" fill="#22c55e"/>
+            <rect id="viz-rl-bar" x="186" y="150" width="34" height="0" rx="4" fill="#22c55e"/>
+            <!-- rail beam connecting tops of both bars -->
+            <line id="viz-beam" x1="74" y1="150" x2="186" y2="150" stroke="#7dba3a" stroke-width="4" stroke-linecap="round"/>
+            <!-- labels -->
+            <text x="57" y="168" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">LEFT</text>
+            <text x="203" y="168" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">RIGHT</text>
+            <!-- position % labels above bars -->
+            <text id="viz-ll-pct" x="57" y="8" text-anchor="middle" font-size="10" fill="var(--text)" font-family="Outfit,sans-serif">—</text>
+            <text id="viz-rl-pct" x="203" y="8" text-anchor="middle" font-size="10" fill="var(--text)" font-family="Outfit,sans-serif">—</text>
+          </svg>
+          <!-- delta + direction panel -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:120px;">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">DELTA (L−R)</div>
+              <div id="viz-delta" style="font-size:24px;font-weight:800;color:#22c55e;font-family:Outfit,sans-serif;">—</div>
+              <div style="font-size:10px;color:var(--text-muted);">counts</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">DIRECTION</div>
+              <div id="viz-dir" style="font-size:16px;font-weight:700;color:var(--text);font-family:Outfit,sans-serif;">—</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">STROKE</div>
+              <div id="viz-stroke" style="font-size:14px;font-weight:700;color:var(--text);font-family:Outfit,sans-serif;">—</div>
+              <div style="font-size:10px;color:var(--text-muted);">L pos / R pos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end lift-panel -->
 
     <!-- FRAME LOG -->
