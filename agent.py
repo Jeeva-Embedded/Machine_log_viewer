@@ -141,7 +141,15 @@ def apply_can_config(cfg):
     print(f"[CFG] decode config applied: {len(fn)} function ids, machines {sorted(addr)}")
 
 def save_can_config(cfg):
-    """Apply + persist a config received from the website (via the relay)."""
+    """Apply + persist a config received from the website (via the relay).
+    Ignores the incoming config if the local one already has more function IDs
+    (prevents Render's stale config from overwriting a freshly updated local one).
+    """
+    incoming_fids = len(cfg.get('function_ids', [])) if isinstance(cfg, dict) else 0
+    local_fids    = len(CAN_CONFIG.get('function_ids', [])) if CAN_CONFIG else 0
+    if incoming_fids < local_fids:
+        print(f"[CFG] relay config has {incoming_fids} FIDs vs local {local_fids} — keeping local, pushing ours up")
+        return
     apply_can_config(cfg)
     try:
         with open(_CAN_CFG_FILE, 'w', encoding='utf-8') as f:
