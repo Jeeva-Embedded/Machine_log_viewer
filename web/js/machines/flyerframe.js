@@ -19,7 +19,7 @@ window.MACHINE_DEFS[3] = { // FlyerFrame (MainBoard_Flyer01_v8) — 6 motors (4 
            0x09:'RuntimeData',0x0A:'Diagnostics',0x0C:'LiftRuntime',0x0D:'ChangeTarget',
            0x0E:'LiftStrokeOver',0x0F:'ACK',0x10:'LiftRunSetup',0x11:'LiftDiagnostics',
            0x13:'HomingDone',0x14:'DiagDone',0x15:'LiftNewStroke',0x16:'LiftSendGB',
-           0x17:'LiftGBData',0x18:'DriveCANChk',0x1B:'PIDUpdateResp'},
+           0x17:'LiftGBData',0x18:'DriveCANChk',0x1B:'PIDUpdateResp',0x1C:'BackRollerSettings'},
     hasAL:false, hasLifts:true, errorBytes:3,
     // RunSetup (0x07): 4 bytes [RUT(1), RDT(1), RPM_H, RPM_L] — same as DrawFrame
     // LiftRunSetup (0x10): 12 bytes [StrokeLen(2), StrokeTime(2), Dir, LiftRUT, LiftRDT, LiftCRT(2)]

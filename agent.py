@@ -83,7 +83,8 @@ MACHINE_FN = {
         0x09:'RuntimeData', 0x0A:'Diagnostics', 0x0C:'LiftRuntime', 0x0D:'ChangeTarget',
         0x0E:'LiftStrokeOver', 0x0F:'ACK',  0x10:'LiftRunSetup', 0x11:'LiftDiagnostics',
         0x13:'HomingDone',  0x14:'DiagDone', 0x15:'LiftNewStroke', 0x16:'LiftSendGB',
-        0x17:'LiftGBData',  0x18:'DriveCANChk', 0x1B:'PIDUpdateResp'},
+        0x17:'LiftGBData',  0x18:'DriveCANChk', 0x1B:'PIDUpdateResp',
+        0x1C:'BackRollerSettings'},
     4: {0x01:'MotorState', 0x02:'Error', 0x07:'RunSetup', 0x09:'RuntimeData'},
 }
 CURR_GAIN = 0.00672

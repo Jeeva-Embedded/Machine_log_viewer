@@ -436,6 +436,31 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
     const ca=(d.currADC*CURR_GAIN).toFixed(2);
     if(live)addLog(ts,cid,'CylExtData',src,dst,`RPM:${d.pRPM}/${d.tRPM} ${ca}A FET:${d.fet}°C`);
   }
+  // ── BACK ROLLER SETTINGS (FN=0x1C) — FlyerFrame: 2×16 bytes, data[0]=segment ──
+  else if(fn===0x1C&&data.length>=15&&def.hasLifts){
+    mst.stats.cmd++;
+    const seg=data[0];
+    let detail='';
+    if(seg===0){
+      const spd=(data[1]<<8)|data[2];
+      const td=((data[3]<<8)|data[4])/100;
+      const tpi=((data[5]<<8)|data[6])/100;
+      const layers=(data[7]<<8)|data[8];
+      const ch=(data[9]<<8)|data[10];
+      const rw=((data[11]<<8)|data[12])/100;
+      const dbd=((data[13]<<8)|data[14])/100;
+      detail=`Seg0 Speed:${spd} TDraft:${td.toFixed(2)} TPI:${tpi.toFixed(2)} Layers:${layers} ContentH:${ch} RovingW:${rw.toFixed(2)} ΔBobDia:${dbd.toFixed(2)}`;
+    } else if(seg===1){
+      const bbd=(data[1]<<8)|data[2];
+      const rtf=((data[3]<<8)|data[4])/100;
+      const rut=(data[5]<<8)|data[6];
+      const rdt=(data[7]<<8)|data[8];
+      const clt=(data[9]<<8)|data[10];
+      const caf=((data[11]<<8)|data[12])/100;
+      detail=`Seg1 BareBobDia:${bbd} RTF:${rtf.toFixed(2)} RUT:${rut} RDT:${rdt} LayerChgT:${clt} ConeAng:${caf.toFixed(2)}`;
+    }
+    if(live)addLog(ts,cid,'BackRollerSettings',src,dst,detail);
+  }
   // ── ERROR — 2 bytes (DrawFrame) or 3 bytes (BlowCard/Flyer) ──
   else if(fn===0x02&&data.length>=2){
     mst.stats.err++;
