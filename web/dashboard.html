@@ -327,6 +327,31 @@
             <div class="setting-row"><span class="setting-key">Transition Time</span><span class="setting-val" id="ff-bobbin-tt">—</span></div>
           </div>
         </div>
+        <!-- Back Roller Settings (FN=0x1C) — two segments -->
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div class="settings-col-title" style="color:var(--accent);margin-bottom:8px;">Back Roller Settings (FN=0x1C)</div>
+          <div class="settings-grid">
+            <div>
+              <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Segment 0 — Yarn / Twist</div>
+              <div class="setting-row"><span class="setting-key">Spindle Speed</span><span class="setting-val" id="ff-brs-spd">—</span></div>
+              <div class="setting-row"><span class="setting-key">Tension Draft</span><span class="setting-val" id="ff-brs-td">—</span></div>
+              <div class="setting-row"><span class="setting-key">TPI</span><span class="setting-val" id="ff-brs-tpi">—</span></div>
+              <div class="setting-row"><span class="setting-key">Target Layers</span><span class="setting-val" id="ff-brs-layers">—</span></div>
+              <div class="setting-row"><span class="setting-key">Content Height</span><span class="setting-val" id="ff-brs-ch">—</span></div>
+              <div class="setting-row"><span class="setting-key">Roving Width</span><span class="setting-val" id="ff-brs-rw">—</span></div>
+              <div class="setting-row"><span class="setting-key">Δ Bobbin Dia</span><span class="setting-val" id="ff-brs-dbd">—</span></div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Segment 1 — Bobbin / Ramp</div>
+              <div class="setting-row"><span class="setting-key">Bare Bobbin Dia</span><span class="setting-val" id="ff-brs-bbd">—</span></div>
+              <div class="setting-row"><span class="setting-key">RTF</span><span class="setting-val" id="ff-brs-rtf">—</span></div>
+              <div class="setting-row"><span class="setting-key">Ramp Up Time</span><span class="setting-val" id="ff-brs-rut">—</span></div>
+              <div class="setting-row"><span class="setting-key">Ramp Down Time</span><span class="setting-val" id="ff-brs-rdt">—</span></div>
+              <div class="setting-row"><span class="setting-key">Layer Change Time</span><span class="setting-val" id="ff-brs-clt">—</span></div>
+              <div class="setting-row"><span class="setting-key">Cone Angle Factor</span><span class="setting-val" id="ff-brs-caf">—</span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -778,10 +803,10 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 
 
-<script src="js/machines/drawframe.js"></script>
-<script src="js/machines/blowcard.js"></script>
-<script src="js/machines/flyerframe.js"></script>
-<script src="js/machines/ringframe.js"></script>
-<script src="js/dashboard.js"></script>
+<script src="js/machines/drawframe.js?v=brs1c"></script>
+<script src="js/machines/blowcard.js?v=brs1c"></script>
+<script src="js/machines/flyerframe.js?v=brs1c"></script>
+<script src="js/machines/ringframe.js?v=brs1c"></script>
+<script src="js/dashboard.js?v=brs1c"></script>
 </body>
 </html>

@@ -450,6 +450,16 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
       const rw=((data[11]<<8)|data[12])/100;
       const dbd=((data[13]<<8)|data[14])/100;
       detail=`Seg0 Speed:${spd} TDraft:${td.toFixed(2)} TPI:${tpi.toFixed(2)} Layers:${layers} ContentH:${ch} RovingW:${rw.toFixed(2)} ΔBobDia:${dbd.toFixed(2)}`;
+      const s=id=>document.getElementById(id);
+      if(s('ff-brs-spd')){
+        s('ff-brs-spd').textContent=spd;
+        s('ff-brs-td').textContent=td.toFixed(2);
+        s('ff-brs-tpi').textContent=tpi.toFixed(2);
+        s('ff-brs-layers').textContent=layers;
+        s('ff-brs-ch').textContent=ch;
+        s('ff-brs-rw').textContent=rw.toFixed(2);
+        s('ff-brs-dbd').textContent=dbd.toFixed(2);
+      }
     } else if(seg===1){
       const bbd=(data[1]<<8)|data[2];
       const rtf=((data[3]<<8)|data[4])/100;
@@ -458,6 +468,15 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
       const clt=(data[9]<<8)|data[10];
       const caf=((data[11]<<8)|data[12])/100;
       detail=`Seg1 BareBobDia:${bbd} RTF:${rtf.toFixed(2)} RUT:${rut} RDT:${rdt} LayerChgT:${clt} ConeAng:${caf.toFixed(2)}`;
+      const s=id=>document.getElementById(id);
+      if(s('ff-brs-bbd')){
+        s('ff-brs-bbd').textContent=bbd;
+        s('ff-brs-rtf').textContent=rtf.toFixed(2);
+        s('ff-brs-rut').textContent=rut;
+        s('ff-brs-rdt').textContent=rdt;
+        s('ff-brs-clt').textContent=clt;
+        s('ff-brs-caf').textContent=caf.toFixed(2);
+      }
     }
     if(live)addLog(ts,cid,'BackRollerSettings',src,dst,detail);
   }
