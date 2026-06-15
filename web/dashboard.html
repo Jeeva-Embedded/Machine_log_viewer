@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -15,7 +15,7 @@
 </head>
 <body>
 
-<!-- ══ TOPBAR (shared) ══ -->
+<!-- â•â• TOPBAR (shared) â•â• -->
 <nav class="topbar">
   <div class="topbar-brand">
     <img class="topbar-logo-img" src="img/logo.png" alt="Gen4">
@@ -27,27 +27,27 @@
     <div class="topbar-al-pill off" id="pill-al" style="display:none"><span class="al-dot"></span> AUTO LEVELLER OFF</div>
     <div class="topbar-status disconnected" id="pill-conn"><span class="status-dot" id="dot-conn"></span> DISCONNECTED</div>
     <span class="topbar-machine-badge" id="topbar-machine" style="display:none">M1</span>
-    <button class="back-link" id="btn-back" onclick="goHome()" style="display:none">← Home</button>
+    <button class="back-link" id="btn-back" onclick="goHome()" style="display:none">â† Home</button>
   </div>
 </nav>
 
 
-<!-- ══════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      HOME PAGE
-══════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="view-home" style="margin-top:var(--topbar-h);padding:28px 32px;">
 <div class="home-wrap">
 
   <!-- Hero -->
   <div class="home-hero" style="position:relative">
-    <a href="/admin" title="Admin — CAN Communication Plan" style="position:absolute;top:18px;right:20px;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;backdrop-filter:blur(4px);">⚙ Admin</a>
-    <div class="home-hero-label">Gen4 Industrial IoT · Textile Monitoring Platform</div>
+    <a href="/admin" title="Admin â€” CAN Communication Plan" style="position:absolute;top:18px;right:20px;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;backdrop-filter:blur(4px);">âš™ Admin</a>
+    <div class="home-hero-label">Gen4 Industrial IoT Â· Textile Monitoring Platform</div>
     <div class="home-hero-title">CAN FD Machine<br><span>Monitor & Analytics</span></div>
     <div class="home-hero-sub">Real-time monitoring of textile machinery via UT-6504-FD CAN FD to Ethernet gateway. Select a machine to begin.</div>
     <div class="home-hero-badges">
       <div class="hero-badge"><div class="hero-badge-dot"></div>UT-6504-FD Gateway</div>
       <div class="hero-badge"><div class="hero-badge-dot"></div>192.168.1.125</div>
-      <div class="hero-badge"><div class="hero-badge-dot"></div>ISO CAN FD · 500k/1M</div>
+      <div class="hero-badge"><div class="hero-badge-dot"></div>ISO CAN FD Â· 500k/1M</div>
       <div class="hero-badge"><div class="hero-badge-dot"></div>4 Channels</div>
     </div>
   </div>
@@ -55,19 +55,19 @@
   <!-- Overview Stats -->
   <div class="home-stats">
     <div class="home-stat-card">
-      <div class="hsc-icon" style="background:#f0fdf4;font-size:22px;">🏭</div>
+      <div class="hsc-icon" style="background:#f0fdf4;font-size:22px;">ðŸ­</div>
       <div><div class="hsc-val" id="hsc-total">4</div><div class="hsc-label">Total Machines</div></div>
     </div>
     <div class="home-stat-card">
-      <div class="hsc-icon" style="background:#f0fdf4;font-size:22px;">🟢</div>
+      <div class="hsc-icon" style="background:#f0fdf4;font-size:22px;">ðŸŸ¢</div>
       <div><div class="hsc-val" id="hsc-active">3</div><div class="hsc-label">Active Channels</div></div>
     </div>
     <div class="home-stat-card">
-      <div class="hsc-icon" style="background:#eff6ff;font-size:22px;">📡</div>
+      <div class="hsc-icon" style="background:#eff6ff;font-size:22px;">ðŸ“¡</div>
       <div><div class="hsc-val">5001</div><div class="hsc-label">WebSocket Port</div></div>
     </div>
     <div class="home-stat-card">
-      <div class="hsc-icon" style="background:#f5f3ff;font-size:22px;">⚡</div>
+      <div class="hsc-icon" style="background:#f5f3ff;font-size:22px;">âš¡</div>
       <div><div class="hsc-val">CAN FD</div><div class="hsc-label">Protocol</div></div>
     </div>
   </div>
@@ -78,54 +78,54 @@
 
     <div class="mcard" style="--mc:#2471a3" onclick="openMachine(1)">
       <div class="mcard-top">
-        <div class="mcard-icon" style="background:#eff6ff;color:#2471a3;">◈</div>
-        <span class="mcard-badge active">● Active</span>
+        <div class="mcard-icon" style="background:#eff6ff;color:#2471a3;">â—ˆ</div>
+        <span class="mcard-badge active">â— Active</span>
       </div>
-      <div class="mcard-can">CAN1 · Port 1001</div>
+      <div class="mcard-can">CAN1 Â· Port 1001</div>
       <div class="mcard-name">DrawFrame</div>
-      <div class="mcard-desc">3-Motor Draft System — Front Roller, Back Roller, Creel with AutoLeveller control</div>
+      <div class="mcard-desc">3-Motor Draft System â€” Front Roller, Back Roller, Creel with AutoLeveller control</div>
       <div class="mcard-footer">
-        <span class="mcard-port">Proxy → ws://localhost:5001</span>
-        <span class="mcard-arrow" style="color:#2471a3;">Open →</span>
+        <span class="mcard-port">Proxy â†’ ws://localhost:5001</span>
+        <span class="mcard-arrow" style="color:#2471a3;">Open â†’</span>
       </div>
     </div>
 
     <div class="mcard" style="--mc:#7dba3a" onclick="openMachine(2)">
       <div class="mcard-top">
-        <div class="mcard-icon" style="background:#f0fdf4;color:#7dba3a;">◉</div>
-        <span class="mcard-badge active">● Active</span>
+        <div class="mcard-icon" style="background:#f0fdf4;color:#7dba3a;">â—‰</div>
+        <span class="mcard-badge active">â— Active</span>
       </div>
-      <div class="mcard-can">CAN2 · Port 2001</div>
+      <div class="mcard-can">CAN2 Â· Port 2001</div>
       <div class="mcard-name">BlowCard</div>
-      <div class="mcard-desc">Fiber Opening & Cleaning — Feed, Opener, Cleaner motor monitoring</div>
+      <div class="mcard-desc">Fiber Opening & Cleaning â€” Feed, Opener, Cleaner motor monitoring</div>
       <div class="mcard-footer">
-        <span class="mcard-port">Proxy → ws://localhost:5001</span>
-        <span class="mcard-arrow" style="color:#7dba3a;">Open →</span>
+        <span class="mcard-port">Proxy â†’ ws://localhost:5001</span>
+        <span class="mcard-arrow" style="color:#7dba3a;">Open â†’</span>
       </div>
     </div>
 
     <div class="mcard" style="--mc:#7c3aed" onclick="openMachine(3)">
       <div class="mcard-top">
-        <div class="mcard-icon" style="background:#f5f3ff;color:#7c3aed;">◆</div>
-        <span class="mcard-badge active">● Active</span>
+        <div class="mcard-icon" style="background:#f5f3ff;color:#7c3aed;">â—†</div>
+        <span class="mcard-badge active">â— Active</span>
       </div>
-      <div class="mcard-can">CAN3 · Port 3001</div>
+      <div class="mcard-can">CAN3 Â· Port 3001</div>
       <div class="mcard-name">FlyerFrame</div>
-      <div class="mcard-desc">Roving Frame Machine — Flyer, Bobbin and Draft motor data streams</div>
+      <div class="mcard-desc">Roving Frame Machine â€” Flyer, Bobbin and Draft motor data streams</div>
       <div class="mcard-footer">
-        <span class="mcard-port">Proxy → ws://localhost:5001</span>
-        <span class="mcard-arrow" style="color:#7c3aed;">Open →</span>
+        <span class="mcard-port">Proxy â†’ ws://localhost:5001</span>
+        <span class="mcard-arrow" style="color:#7c3aed;">Open â†’</span>
       </div>
     </div>
 
     <div class="mcard mcard-soon">
       <div class="mcard-top">
-        <div class="mcard-icon" style="background:#fff7ed;color:#d97706;">◎</div>
+        <div class="mcard-icon" style="background:#fff7ed;color:#d97706;">â—Ž</div>
         <span class="mcard-badge soon">Coming Soon</span>
       </div>
-      <div class="mcard-can">CAN4 · Port 4001</div>
+      <div class="mcard-can">CAN4 Â· Port 4001</div>
       <div class="mcard-name">RingFrame</div>
-      <div class="mcard-desc">Ring Spinning Frame — Under development. Support coming in next release.</div>
+      <div class="mcard-desc">Ring Spinning Frame â€” Under development. Support coming in next release.</div>
       <div class="mcard-footer">
         <span class="mcard-port">Not available yet</span>
       </div>
@@ -136,9 +136,9 @@
 </div><!-- end view-home -->
 
 
-<!-- ══════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      DASHBOARD
-══════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="view-dash">
 
   <!-- SIDEBAR -->
@@ -150,11 +150,11 @@
         <div class="sidebar-conn-label">Connection</div>
         <input class="sidebar-input" id="inp-host" value="localhost" placeholder="Host">
         <input class="sidebar-input" id="inp-port" value="5001" placeholder="Port" style="margin-bottom:8px;">
-        <button class="sidebar-btn sidebar-btn-connect" id="btn-connect" onclick="connectWS()">▶ Connect Live</button>
-        <button class="sidebar-btn sidebar-btn-disc" id="btn-disconnect" onclick="disconnectWS()" style="display:none;margin-top:4px;">■ Disconnect</button>
-        <button class="sidebar-btn sidebar-btn-file" onclick="document.getElementById('file-input').click()">📂 Load Log File</button>
+        <button class="sidebar-btn sidebar-btn-connect" id="btn-connect" onclick="connectWS()">â–¶ Connect Live</button>
+        <button class="sidebar-btn sidebar-btn-disc" id="btn-disconnect" onclick="disconnectWS()" style="display:none;margin-top:4px;">â–  Disconnect</button>
+        <button class="sidebar-btn sidebar-btn-file" onclick="document.getElementById('file-input').click()">ðŸ“‚ Load Log File</button>
         <input type="file" id="file-input" accept=".txt,.log" style="display:none" onchange="loadFile(event)">
-        <button class="sidebar-btn" onclick="clearAll()" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);margin-top:4px;font-size:11px;">✕ Clear All</button>
+        <button class="sidebar-btn" onclick="clearAll()" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);margin-top:4px;font-size:11px;">âœ• Clear All</button>
       </div>
     </div>
 
@@ -224,10 +224,10 @@
       <div class="sidebar-section-label" style="display:flex;justify-content:space-between;align-items:center;">
         <span>Log Archive</span>
         <button onclick="loadLogList()" title="Refresh"
-          style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:13px;padding:0 4px;">⟳</button>
+          style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:13px;padding:0 4px;">âŸ³</button>
       </div>
       <div id="log-archive" style="max-height:240px;overflow-y:auto;font-size:11px;">
-        <div style="color:rgba(255,255,255,.3);padding:6px 4px;">Loading…</div>
+        <div style="color:rgba(255,255,255,.3);padding:6px 4px;">Loadingâ€¦</div>
       </div>
     </div>
 
@@ -248,7 +248,7 @@
     <div class="dash-page-header">
       <div>
         <div class="dash-page-title" id="dash-title">DrawFrame Monitor</div>
-        <div class="dash-page-sub" id="dash-sub">CAN1 · 192.168.1.125:1001 · Real-time motor data</div>
+        <div class="dash-page-sub" id="dash-sub">CAN1 Â· 192.168.1.125:1001 Â· Real-time motor data</div>
       </div>
     </div>
 
@@ -261,19 +261,19 @@
     <!-- KPI row -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <div class="kpi-icon" style="background:#eff6ff;">📡</div>
+        <div class="kpi-icon" style="background:#eff6ff;">ðŸ“¡</div>
         <div><div class="kpi-val" id="kpi-frames">0</div><div class="kpi-label">Total Frames</div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon" style="background:#f0fdf4;">⚡</div>
+        <div class="kpi-icon" style="background:#f0fdf4;">âš¡</div>
         <div><div class="kpi-val" id="kpi-rt">0</div><div class="kpi-label">Runtime Frames</div></div>
       </div>
       <div class="kpi-card" id="kpi-al-card">
-        <div class="kpi-icon" style="background:#f5f3ff;">🔄</div>
+        <div class="kpi-icon" style="background:#f5f3ff;">ðŸ”„</div>
         <div><div class="kpi-val" id="kpi-al">0</div><div class="kpi-label" id="kpi-al-label">AL Sensor Frames</div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon" style="background:#fef2f2;">⚠️</div>
+        <div class="kpi-icon" style="background:#fef2f2;">âš ï¸</div>
         <div><div class="kpi-val" id="kpi-err">0</div><div class="kpi-label">Error Frames</div></div>
       </div>
     </div>
@@ -286,20 +286,20 @@
         <div class="settings-grid">
           <div>
             <div class="settings-col-title">Machine</div>
-            <div class="setting-row"><span class="setting-key">Delivery</span><span class="setting-val" id="s-delivery">—</span></div>
-            <div class="setting-row"><span class="setting-key">Draft</span><span class="setting-val" id="s-draft">—</span></div>
+            <div class="setting-row"><span class="setting-key">Delivery</span><span class="setting-val" id="s-delivery">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Draft</span><span class="setting-val" id="s-draft">â€”</span></div>
           </div>
           <div>
             <div class="settings-col-title">AL Settings</div>
-            <div class="setting-row"><span class="setting-key">Kp</span><span class="setting-val" id="al-kp">—</span></div>
-            <div class="setting-row"><span class="setting-key">Sliver N+1</span><span class="setting-val" id="al-sn1">—</span></div>
-            <div class="setting-row"><span class="setting-key">Sliver N</span><span class="setting-val" id="al-sn">—</span></div>
-            <div class="setting-row"><span class="setting-key">Sliver N-1</span><span class="setting-val" id="al-snm1">—</span></div>
-            <div class="setting-row"><span class="setting-key">Target g/m</span><span class="setting-val" id="al-tgt">—</span></div>
+            <div class="setting-row"><span class="setting-key">Kp</span><span class="setting-val" id="al-kp">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Sliver N+1</span><span class="setting-val" id="al-sn1">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Sliver N</span><span class="setting-val" id="al-sn">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Sliver N-1</span><span class="setting-val" id="al-snm1">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Target g/m</span><span class="setting-val" id="al-tgt">â€”</span></div>
           </div>
         </div>
       </div>
-      <!-- per-motor RUT / RDT / RPM — built per machine by renderSetup() -->
+      <!-- per-motor RUT / RDT / RPM â€” built per machine by renderSetup() -->
       <div class="settings-grid" id="setup-motors-grid"></div>
 
       <!-- FlyerFrame-only: BT params + Lift setup -->
@@ -307,24 +307,24 @@
         <div class="settings-grid">
           <div>
             <div class="settings-col-title" style="color:var(--accent);">Machine Params</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-style:italic;">Configured via Bluetooth — not transmitted over CAN</div>
-            <div class="setting-row"><span class="setting-key">TPI</span><span class="setting-val" id="ff-tpi" style="color:var(--muted);">— BT</span></div>
-            <div class="setting-row"><span class="setting-key">Draft</span><span class="setting-val" id="ff-draft" style="color:var(--muted);">— BT</span></div>
-            <div class="setting-row"><span class="setting-key">Bare Bobbin Dia</span><span class="setting-val" id="ff-bbdia" style="color:var(--muted);">— BT</span></div>
-            <div class="setting-row"><span class="setting-key">Delta Bobbin Dia</span><span class="setting-val" id="ff-dbbdia" style="color:var(--muted);">— BT</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-style:italic;">Configured via Bluetooth â€” not transmitted over CAN</div>
+            <div class="setting-row"><span class="setting-key">TPI</span><span class="setting-val" id="ff-tpi" style="color:var(--muted);">â€” BT</span></div>
+            <div class="setting-row"><span class="setting-key">Draft</span><span class="setting-val" id="ff-draft" style="color:var(--muted);">â€” BT</span></div>
+            <div class="setting-row"><span class="setting-key">Bare Bobbin Dia</span><span class="setting-val" id="ff-bbdia" style="color:var(--muted);">â€” BT</span></div>
+            <div class="setting-row"><span class="setting-key">Delta Bobbin Dia</span><span class="setting-val" id="ff-dbbdia" style="color:var(--muted);">â€” BT</span></div>
           </div>
           <div>
             <div class="settings-col-title" style="color:var(--purple);">Lift Setup (from CAN FN=0x10)</div>
-            <div class="setting-row"><span class="setting-key">Stroke Length</span><span class="setting-val" id="ff-stroke-len">—</span></div>
-            <div class="setting-row"><span class="setting-key">Stroke Time</span><span class="setting-val" id="ff-stroke-time">—</span></div>
-            <div class="setting-row"><span class="setting-key">Direction</span><span class="setting-val" id="ff-lift-dir">—</span></div>
-            <div class="setting-row"><span class="setting-key">Lift Ramp Up</span><span class="setting-val" id="ff-lift-rut">—</span></div>
-            <div class="setting-row"><span class="setting-key">Lift Ramp Down</span><span class="setting-val" id="ff-lift-rdt">—</span></div>
+            <div class="setting-row"><span class="setting-key">Stroke Length</span><span class="setting-val" id="ff-stroke-len">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Stroke Time</span><span class="setting-val" id="ff-stroke-time">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Direction</span><span class="setting-val" id="ff-lift-dir">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Lift Ramp Up</span><span class="setting-val" id="ff-lift-rut">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Lift Ramp Down</span><span class="setting-val" id="ff-lift-rdt">â€”</span></div>
           </div>
           <div>
             <div class="settings-col-title" style="color:var(--purple);">Bobbin Target (FN=0x0D)</div>
-            <div class="setting-row"><span class="setting-key">Current Target RPM</span><span class="setting-val" id="ff-bobbin-target">—</span></div>
-            <div class="setting-row"><span class="setting-key">Transition Time</span><span class="setting-val" id="ff-bobbin-tt">—</span></div>
+            <div class="setting-row"><span class="setting-key">Current Target RPM</span><span class="setting-val" id="ff-bobbin-target">â€”</span></div>
+            <div class="setting-row"><span class="setting-key">Transition Time</span><span class="setting-val" id="ff-bobbin-tt">â€”</span></div>
           </div>
         </div>
       </div>
@@ -341,12 +341,12 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="fr-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="fr-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="fr-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="fr-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="fr-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="fr-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="fr-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="fr-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="fr-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="fr-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="fr-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="fr-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="fr-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="fr-rpm-pct">0%</span></div>
           <div class="temp-pair">
@@ -357,7 +357,7 @@
                   <path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/>
                   <path class="temp-arc-fill" id="fr-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/>
                 </svg>
-                <div class="temp-center"><div class="temp-val-big" id="fr-fet">—</div><div class="temp-val-unit">°C</div></div>
+                <div class="temp-center"><div class="temp-val-big" id="fr-fet">â€”</div><div class="temp-val-unit">Â°C</div></div>
               </div>
               <div class="temp-bar-row"><span class="temp-bar-label">0</span><div class="temp-scale"></div><span class="temp-bar-label" style="text-align:right">100</span></div>
             </div>
@@ -368,14 +368,14 @@
                   <path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/>
                   <path class="temp-arc-fill" id="fr-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/>
                 </svg>
-                <div class="temp-center"><div class="temp-val-big" id="fr-mot">—</div><div class="temp-val-unit">°C</div></div>
+                <div class="temp-center"><div class="temp-val-big" id="fr-mot">â€”</div><div class="temp-val-unit">Â°C</div></div>
               </div>
               <div class="temp-bar-row"><span class="temp-bar-label">0</span><div class="temp-scale"></div><span class="temp-bar-label" style="text-align:right">100</span></div>
             </div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('FR','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-fr-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('FR','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-fr-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('FR','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-fr-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('FR','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-fr-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -388,12 +388,12 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="br-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="br-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="br-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="br-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="br-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="br-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="br-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="br-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="br-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="br-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="br-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="br-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="br-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="br-rpm-pct">0%</span></div>
           <div class="temp-pair">
@@ -404,7 +404,7 @@
                   <path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/>
                   <path class="temp-arc-fill" id="br-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/>
                 </svg>
-                <div class="temp-center"><div class="temp-val-big" id="br-fet">—</div><div class="temp-val-unit">°C</div></div>
+                <div class="temp-center"><div class="temp-val-big" id="br-fet">â€”</div><div class="temp-val-unit">Â°C</div></div>
               </div>
               <div class="temp-bar-row"><span class="temp-bar-label">0</span><div class="temp-scale"></div><span class="temp-bar-label" style="text-align:right">100</span></div>
             </div>
@@ -415,14 +415,14 @@
                   <path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/>
                   <path class="temp-arc-fill" id="br-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/>
                 </svg>
-                <div class="temp-center"><div class="temp-val-big" id="br-mot">—</div><div class="temp-val-unit">°C</div></div>
+                <div class="temp-center"><div class="temp-val-big" id="br-mot">â€”</div><div class="temp-val-unit">Â°C</div></div>
               </div>
               <div class="temp-bar-row"><span class="temp-bar-label">0</span><div class="temp-scale"></div><span class="temp-bar-label" style="text-align:right">100</span></div>
             </div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('BR','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-br-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('BR','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-br-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('BR','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-br-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('BR','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-br-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -435,12 +435,12 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="cr-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="cr-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="cr-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="cr-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="cr-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="cr-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="cr-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="cr-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="cr-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="cr-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="cr-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="cr-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="cr-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="cr-rpm-pct">0%</span></div>
           <div class="temp-pair">
@@ -451,7 +451,7 @@
                   <path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/>
                   <path class="temp-arc-fill" id="cr-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/>
                 </svg>
-                <div class="temp-center"><div class="temp-val-big" id="cr-fet">—</div><div class="temp-val-unit">°C</div></div>
+                <div class="temp-center"><div class="temp-val-big" id="cr-fet">â€”</div><div class="temp-val-unit">Â°C</div></div>
               </div>
               <div class="temp-bar-row"><span class="temp-bar-label">0</span><div class="temp-scale"></div><span class="temp-bar-label" style="text-align:right">100</span></div>
             </div>
@@ -462,20 +462,20 @@
                   <path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/>
                   <path class="temp-arc-fill" id="cr-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/>
                 </svg>
-                <div class="temp-center"><div class="temp-val-big" id="cr-mot">—</div><div class="temp-val-unit">°C</div></div>
+                <div class="temp-center"><div class="temp-val-big" id="cr-mot">â€”</div><div class="temp-val-unit">Â°C</div></div>
               </div>
               <div class="temp-bar-row"><span class="temp-bar-label">0</span><div class="temp-scale"></div><span class="temp-bar-label" style="text-align:right">100</span></div>
             </div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('CR','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-cr-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('CR','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-cr-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('CR','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-cr-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('CR','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-cr-curr"></canvas></div></div>
           </div>
         </div>
       </div>
 
 
-      <!-- EXTRA MOTOR CARDS m4-m8 — shown per machine (same grid, flow 2-per-row) -->
+      <!-- EXTRA MOTOR CARDS m4-m8 â€” shown per machine (same grid, flow 2-per-row) -->
 
       <!-- m4 -->
       <div class="motor-card" id="card-m4" style="display:none">
@@ -485,21 +485,21 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m4-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m4-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m4-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m4-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m4-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m4-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m4-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m4-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m4-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m4-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m4-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m4-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m4-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m4-rpm-pct">0%</span></div>
           <div class="temp-pair">
-            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m4-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m4-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
-            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m4-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m4-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m4-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m4-fet">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m4-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m4-mot">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('M4','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m4-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('M4','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m4-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M4','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-m4-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M4','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-m4-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -512,21 +512,21 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m5-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m5-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m5-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m5-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m5-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m5-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m5-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m5-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m5-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m5-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m5-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m5-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m5-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m5-rpm-pct">0%</span></div>
           <div class="temp-pair">
-            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m5-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m5-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
-            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m5-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m5-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m5-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m5-fet">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m5-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m5-mot">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('M5','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m5-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('M5','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m5-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M5','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-m5-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M5','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-m5-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -539,21 +539,21 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m6-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m6-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m6-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m6-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m6-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m6-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m6-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m6-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m6-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m6-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m6-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m6-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m6-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m6-rpm-pct">0%</span></div>
           <div class="temp-pair">
-            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m6-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m6-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
-            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m6-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m6-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m6-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m6-fet">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m6-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m6-mot">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('M6','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m6-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('M6','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m6-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M6','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-m6-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M6','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-m6-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -566,21 +566,21 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m7-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m7-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m7-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m7-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m7-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m7-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m7-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m7-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m7-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m7-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m7-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m7-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m7-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m7-rpm-pct">0%</span></div>
           <div class="temp-pair">
-            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m7-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m7-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
-            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m7-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m7-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m7-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m7-fet">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m7-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m7-mot">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('M7','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m7-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('M7','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m7-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M7','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-m7-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M7','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-m7-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -593,21 +593,21 @@
         </div>
         <div class="motor-card-body">
           <div class="metrics-grid">
-            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m8-trpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m8-prpm">—</div></div>
-            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m8-pwm">—</div></div>
-            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m8-curr">—<span class="metric-unit">A</span></div></div>
-            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m8-volt">—<span class="metric-unit">V</span></div></div>
-            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m8-pwr">—<span class="metric-unit">W</span></div></div>
+            <div class="metric-item"><div class="metric-label">Target RPM</div><div class="metric-val primary" id="m8-trpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Present RPM</div><div class="metric-val" id="m8-prpm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">PWM</div><div class="metric-val" id="m8-pwm">â€”</div></div>
+            <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="m8-curr">â€”<span class="metric-unit">A</span></div></div>
+            <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="m8-volt">â€”<span class="metric-unit">V</span></div></div>
+            <div class="metric-item"><div class="metric-label">Power</div><div class="metric-val" id="m8-pwr">â€”<span class="metric-unit">W</span></div></div>
           </div>
           <div class="gauge-row"><span class="gauge-label-txt">RPM</span><div class="gauge-track"><div class="gauge-fill gauge-fill-rpm" id="m8-rpm-bar" style="width:0%"></div></div><span class="gauge-pct" id="m8-rpm-pct">0%</span></div>
           <div class="temp-pair">
-            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m8-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m8-fet">—</div><div class="temp-val-unit">°C</div></div></div></div>
-            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m8-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m8-mot">—</div><div class="temp-val-unit">°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m8-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m8-fet">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
+            <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div><div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="m8-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg><div class="temp-center"><div class="temp-val-big" id="m8-mot">â€”</div><div class="temp-val-unit">Â°C</div></div></div></div>
           </div>
           <div class="card-chart-row">
-            <div class="card-chart-box" onclick="openModal('M8','rpm')"><div class="card-chart-label">RPM Trend ↗</div><div class="card-chart-wrap"><canvas id="chart-m8-rpm"></canvas></div></div>
-            <div class="card-chart-box" onclick="openModal('M8','curr')"><div class="card-chart-label">Current (A) ↗</div><div class="card-chart-wrap"><canvas id="chart-m8-curr"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M8','rpm')"><div class="card-chart-label">RPM Trend â†—</div><div class="card-chart-wrap"><canvas id="chart-m8-rpm"></canvas></div></div>
+            <div class="card-chart-box" onclick="openModal('M8','curr')"><div class="card-chart-label">Current (A) â†—</div><div class="card-chart-wrap"><canvas id="chart-m8-curr"></canvas></div></div>
           </div>
         </div>
       </div>
@@ -627,28 +627,28 @@
         <div class="al-sensors-row">
           <div class="al-sensor-card">
             <div class="al-sensor-label">Scanning Sensor</div>
-            <div class="al-sensor-val" id="al-scan">—</div>
+            <div class="al-sensor-val" id="al-scan">â€”</div>
             <div class="al-sensor-unit">ADC</div>
           </div>
           <div class="al-sensor-card">
             <div class="al-sensor-label">Coiler Sensor</div>
-            <div class="al-sensor-val" id="al-coil">—</div>
+            <div class="al-sensor-val" id="al-coil">â€”</div>
             <div class="al-sensor-unit">ADC</div>
           </div>
           <div class="al-sensor-card">
             <div class="al-sensor-label">Frame Counter</div>
-            <div class="al-sensor-val" style="font-size:22px;" id="al-ctr-val">—</div>
+            <div class="al-sensor-val" style="font-size:22px;" id="al-ctr-val">â€”</div>
             <div class="al-sensor-unit" id="al-ctr"></div>
           </div>
         </div>
         <div class="al-chart-box" onclick="openModal('AL','sensor')">
-          <div class="al-chart-label">Scanning &amp; Coiler Sensor Trend — Click to expand ↗</div>
+          <div class="al-chart-label">Scanning &amp; Coiler Sensor Trend â€” Click to expand â†—</div>
           <div class="al-chart-wrap"><canvas id="chart-al"></canvas></div>
         </div>
       </div>
     </div>
 
-    <!-- LIFT MOTORS — FlyerFrame only -->
+    <!-- LIFT MOTORS â€” FlyerFrame only -->
     <div id="lift-panel" style="display:none;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">Lift Motors</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
@@ -661,21 +661,21 @@
           </div>
           <div class="motor-card-body">
             <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
-              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="ll-tpos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="ll-ppos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="ll-rpm">—</div></div>
-              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="ll-curr">—<span class="metric-unit">A</span></div></div>
-              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="ll-volt">—<span class="metric-unit">V</span></div></div>
-              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="ll-dir">—</div></div>
+              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="ll-tpos">â€”<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="ll-ppos">â€”<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="ll-rpm">â€”</div></div>
+              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="ll-curr">â€”<span class="metric-unit">A</span></div></div>
+              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="ll-volt">â€”<span class="metric-unit">V</span></div></div>
+              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="ll-dir">â€”</div></div>
             </div>
             <div class="temp-pair" onclick="openModal('LL','temp')" title="Click to view temperature chart" style="cursor:pointer">
               <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div>
                 <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="ll-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="ll-fet">—</div><div class="temp-val-unit">°C</div></div>
+                  <div class="temp-center"><div class="temp-val-big" id="ll-fet">â€”</div><div class="temp-val-unit">Â°C</div></div>
                 </div></div>
               <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div>
                 <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="ll-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="ll-mot">—</div><div class="temp-val-unit">°C</div></div>
+                  <div class="temp-center"><div class="temp-val-big" id="ll-mot">â€”</div><div class="temp-val-unit">Â°C</div></div>
                 </div></div>
             </div>
           </div>
@@ -689,21 +689,21 @@
           </div>
           <div class="motor-card-body">
             <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
-              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="rl-tpos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="rl-ppos">—<span class="metric-unit">m</span></div></div>
-              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="rl-rpm">—</div></div>
-              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="rl-curr">—<span class="metric-unit">A</span></div></div>
-              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="rl-volt">—<span class="metric-unit">V</span></div></div>
-              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="rl-dir">—</div></div>
+              <div class="metric-item"><div class="metric-label">Target Pos</div><div class="metric-val primary" id="rl-tpos">â€”<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">Present Pos</div><div class="metric-val" id="rl-ppos">â€”<span class="metric-unit">m</span></div></div>
+              <div class="metric-item"><div class="metric-label">RPM</div><div class="metric-val" id="rl-rpm">â€”</div></div>
+              <div class="metric-item"><div class="metric-label">Current</div><div class="metric-val" id="rl-curr">â€”<span class="metric-unit">A</span></div></div>
+              <div class="metric-item"><div class="metric-label">Voltage</div><div class="metric-val" id="rl-volt">â€”<span class="metric-unit">V</span></div></div>
+              <div class="metric-item"><div class="metric-label">Direction</div><div class="metric-val" id="rl-dir">â€”</div></div>
             </div>
             <div class="temp-pair" onclick="openModal('RL','temp')" title="Click to view temperature chart" style="cursor:pointer">
               <div class="temp-gauge"><div class="temp-gauge-title">MOSFET TEMP</div>
                 <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="rl-fet-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="rl-fet">—</div><div class="temp-val-unit">°C</div></div>
+                  <div class="temp-center"><div class="temp-val-big" id="rl-fet">â€”</div><div class="temp-val-unit">Â°C</div></div>
                 </div></div>
               <div class="temp-gauge"><div class="temp-gauge-title">MOTOR TEMP</div>
                 <div class="temp-svg-wrap"><svg class="temp-svg" viewBox="0 0 80 48"><path class="temp-arc-bg" d="M 8 44 A 32 32 0 0 1 72 44"/><path class="temp-arc-fill" id="rl-mot-arc" d="M 8 44 A 32 32 0 0 1 72 44" stroke="#22c55e" stroke-dasharray="0 100.53"/></svg>
-                  <div class="temp-center"><div class="temp-val-big" id="rl-mot">—</div><div class="temp-val-unit">°C</div></div>
+                  <div class="temp-center"><div class="temp-val-big" id="rl-mot">â€”</div><div class="temp-val-unit">Â°C</div></div>
                 </div></div>
             </div>
           </div>
@@ -723,14 +723,14 @@
             <!-- fill bars (anchored bottom=154, height set by JS) -->
             <rect id="viz-ll-bar" x="44" y="154" width="26" height="0" rx="5" fill="#22c55e" opacity=".85"/>
             <rect id="viz-rl-bar" x="190" y="154" width="26" height="0" rx="5" fill="#22c55e" opacity=".85"/>
-            <!-- position marker dots — always visible, y updated by JS -->
+            <!-- position marker dots â€” always visible, y updated by JS -->
             <circle id="viz-ll-dot" cx="57" cy="154" r="8" fill="#22c55e"/>
             <circle id="viz-rl-dot" cx="203" cy="154" r="8" fill="#22c55e"/>
             <!-- rail beam connecting the two marker dots -->
             <line id="viz-beam" x1="65" y1="154" x2="190" y2="154" stroke="#7dba3a" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="6 4"/>
-            <!-- direction arrows inside dots (▲/▼ text) -->
-            <text id="viz-ll-arr" x="57" y="158" text-anchor="middle" font-size="10" fill="white" font-family="Outfit,sans-serif">•</text>
-            <text id="viz-rl-arr" x="203" y="158" text-anchor="middle" font-size="10" fill="white" font-family="Outfit,sans-serif">•</text>
+            <!-- direction arrows inside dots (â–²/â–¼ text) -->
+            <text id="viz-ll-arr" x="57" y="158" text-anchor="middle" font-size="10" fill="white" font-family="Outfit,sans-serif">â€¢</text>
+            <text id="viz-rl-arr" x="203" y="158" text-anchor="middle" font-size="10" fill="white" font-family="Outfit,sans-serif">â€¢</text>
             <!-- labels -->
             <text x="57" y="174" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">LEFT</text>
             <text x="203" y="174" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">RIGHT</text>
@@ -738,23 +738,23 @@
             <text x="26" y="18" text-anchor="end" font-size="9" fill="var(--text-muted)" font-family="Outfit,sans-serif">TOP</text>
             <text x="26" y="158" text-anchor="end" font-size="9" fill="var(--text-muted)" font-family="Outfit,sans-serif">BOT</text>
             <!-- position % labels -->
-            <text id="viz-ll-pct" x="57" y="10" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Outfit,sans-serif">—</text>
-            <text id="viz-rl-pct" x="203" y="10" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Outfit,sans-serif">—</text>
+            <text id="viz-ll-pct" x="57" y="10" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Outfit,sans-serif">â€”</text>
+            <text id="viz-rl-pct" x="203" y="10" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Outfit,sans-serif">â€”</text>
           </svg>
           <!-- delta + direction panel -->
           <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:120px;">
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;">
-              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">DELTA (L−R)</div>
-              <div id="viz-delta" style="font-size:24px;font-weight:800;color:#22c55e;font-family:Outfit,sans-serif;">—</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">DELTA (Lâˆ’R)</div>
+              <div id="viz-delta" style="font-size:24px;font-weight:800;color:#22c55e;font-family:Outfit,sans-serif;">â€”</div>
               <div style="font-size:10px;color:var(--text-muted);">counts</div>
             </div>
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;">
               <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">DIRECTION</div>
-              <div id="viz-dir" style="font-size:16px;font-weight:700;color:var(--text);font-family:Outfit,sans-serif;">—</div>
+              <div id="viz-dir" style="font-size:16px;font-weight:700;color:var(--text);font-family:Outfit,sans-serif;">â€”</div>
             </div>
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;">
               <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">STROKE</div>
-              <div id="viz-stroke" style="font-size:14px;font-weight:700;color:var(--text);font-family:Outfit,sans-serif;">—</div>
+              <div id="viz-stroke" style="font-size:14px;font-weight:700;color:var(--text);font-family:Outfit,sans-serif;">â€”</div>
               <div style="font-size:10px;color:var(--text-muted);">L pos / R pos</div>
             </div>
           </div>
@@ -775,7 +775,7 @@
       </div>
       <div class="log-table-wrap">
         <table class="log-table">
-          <thead><tr><th>Type</th><th>Time</th><th>CAN ID</th><th>Function</th><th>Src→Dst</th><th>Details</th></tr></thead>
+          <thead><tr><th>Type</th><th>Time</th><th>CAN ID</th><th>Function</th><th>Srcâ†’Dst</th><th>Details</th></tr></thead>
           <tbody id="log-container"></tbody>
         </table>
       </div>
@@ -789,25 +789,25 @@
 <div id="logs-modal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="modal-title">Log Files — saved on the laptop (per session)</span>
+      <span class="modal-title">Log Files â€” saved on the laptop (per session)</span>
       <div class="modal-actions">
-        <button class="btn btn-outline btn-sm" onclick="loadLogsTable()">⟳ Refresh</button>
-        <button class="btn btn-outline btn-sm" onclick="closeLogsView()">✕ Close</button>
+        <button class="btn btn-outline btn-sm" onclick="loadLogsTable()">âŸ³ Refresh</button>
+        <button class="btn btn-outline btn-sm" onclick="closeLogsView()">âœ• Close</button>
       </div>
     </div>
     <div class="modal-body" style="overflow:auto;">
       <!-- Google Drive folder: where the agent uploads each session's raw+csv -->
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-        <span style="font-size:12px;font-weight:700;color:var(--text);">📁 Google Drive folder:</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text);">ðŸ“ Google Drive folder:</span>
         <input id="drive-folder-input" placeholder="paste Drive folder link or ID"
           style="flex:1;min-width:220px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;">
         <button class="btn btn-primary btn-sm" onclick="saveDriveFolder()">Save</button>
-        <a id="drive-folder-link" href="#" target="_blank" class="btn btn-outline btn-sm" style="display:none;">↗ Open folder</a>
-        <div style="flex-basis:100%;font-size:11px;color:var(--muted);">Each Connect → Disconnect session's RAW + CSV is auto‑uploaded here.</div>
+        <a id="drive-folder-link" href="#" target="_blank" class="btn btn-outline btn-sm" style="display:none;">â†— Open folder</a>
+        <div style="flex-basis:100%;font-size:11px;color:var(--muted);">Each Connect â†’ Disconnect session's RAW + CSV is autoâ€‘uploaded here.</div>
       </div>
-      <div id="logs-table-wrap"><div class="la-empty" style="padding:20px;color:var(--muted);">Loading…</div></div>
+      <div id="logs-table-wrap"><div class="la-empty" style="padding:20px;color:var(--muted);">Loadingâ€¦</div></div>
     </div>
-    <div class="modal-footer">Each agent session (connect → disconnect) saves one RAW .txt and one decoded .csv per machine.</div>
+    <div class="modal-footer">Each agent session (connect â†’ disconnect) saves one RAW .txt and one decoded .csv per machine.</div>
   </div>
 </div>
 
@@ -817,12 +817,12 @@
     <div class="modal-header">
       <span class="modal-title" id="modal-title">Chart</span>
       <div class="modal-actions">
-        <button class="btn btn-outline btn-sm" onclick="resetModalZoom()">↺ Reset Zoom</button>
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">✕ Close</button>
+        <button class="btn btn-outline btn-sm" onclick="resetModalZoom()">â†º Reset Zoom</button>
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">âœ• Close</button>
       </div>
     </div>
     <div class="modal-body"><canvas id="modal-canvas"></canvas></div>
-    <div class="modal-footer">Scroll to zoom · Drag to pan · Double-click to reset</div>
+    <div class="modal-footer">Scroll to zoom Â· Drag to pan Â· Double-click to reset</div>
   </div>
 </div>
 
