@@ -77,7 +77,7 @@ function renderMachine(mid){
 // ── BUILD PER-MOTOR SETUP COLUMNS (Set RPM / Ramp Up / Ramp Down) ──
 function renderSetup(mid){
   const def=MACHINE_DEFS[mid]||MACHINE_DEFS[1], mst=machineState[mid];
-  const order=['fr','br','cr'].concat(def.extraMotors||[]);
+  const order=def.setupLabels?Object.keys(def.setupLabels):['fr','br','cr'].concat(def.extraMotors||[]);
   let html='';
   order.forEach(p=>{
     const nm=(def.motorNames&&def.motorNames[p])||p.toUpperCase();
