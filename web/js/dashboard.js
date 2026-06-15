@@ -275,16 +275,16 @@ function updateLiftViz(){
   if(rDot)rDot.setAttribute('fill',col);
   beam.setAttribute('stroke',col);
 
-  // direction arrow inside dot
-  const isUp=ll.ppos>=0&&lp<Math.abs(ll.tpos);
-  const arrChar=isUp?'▲':'▼';
+  // direction from firmware dir byte (1=UP, 2=DOWN)
+  const isUp = (ll.dir||0) === 1;
+  const arrChar = isUp ? '▲' : '▼';
   if(lArr){lArr.textContent=arrChar;lArr.setAttribute('y',lY+4);}
   if(rArr){rArr.textContent=arrChar;rArr.setAttribute('y',rY+4);}
 
   if(lPctEl) lPctEl.textContent=Math.round(lPct*100)+'%';
   if(rPctEl) rPctEl.textContent=Math.round(rPct*100)+'%';
   if(deltaEl){deltaEl.textContent=(delta>=0?'+':'')+Math.round(delta);deltaEl.style.color=col;}
-  if(dirEl) dirEl.textContent=isUp?'▲ UP':'▼ DOWN';
+  if(dirEl){dirEl.textContent=isUp?'▲ UP':'▼ DOWN';dirEl.style.color=isUp?'#22c55e':'#3b82f6';}
   if(strokeEl) strokeEl.textContent=`${Math.round(lp)} / ${Math.round(rp)}`;
 }
 
@@ -313,7 +313,7 @@ function updateLiftUI(src, data){
   const card = document.getElementById('card-'+p);
   if(card) card.classList.add('active');
   // feed seesaw viz
-  _liftVizState[p]={ppos,tpos};
+  _liftVizState[p]={ppos,tpos,dir};
   if(activeMachine===3) updateLiftViz();
 }
 
