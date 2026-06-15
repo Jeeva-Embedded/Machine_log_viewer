@@ -716,21 +716,30 @@
         <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;margin-bottom:12px;">BOBBIN RAIL POSITION</div>
         <div style="display:flex;align-items:flex-end;gap:24px;">
           <!-- seesaw SVG -->
-          <svg id="lift-seesaw-svg" viewBox="0 0 260 180" style="flex:1;max-width:320px;min-width:160px;height:auto;display:block;">
+          <svg id="lift-seesaw-svg" viewBox="0 0 260 190" style="flex:1;max-width:320px;min-width:160px;height:auto;display:block;">
             <!-- track backgrounds -->
-            <rect x="40" y="10" width="34" height="140" rx="4" fill="var(--border)" opacity=".5"/>
-            <rect x="186" y="10" width="34" height="140" rx="4" fill="var(--border)" opacity=".5"/>
-            <!-- fill bars (height updated by JS, anchored at bottom y=150) -->
-            <rect id="viz-ll-bar" x="40" y="150" width="34" height="0" rx="4" fill="#22c55e"/>
-            <rect id="viz-rl-bar" x="186" y="150" width="34" height="0" rx="4" fill="#22c55e"/>
-            <!-- rail beam connecting tops of both bars -->
-            <line id="viz-beam" x1="74" y1="150" x2="186" y2="150" stroke="#7dba3a" stroke-width="4" stroke-linecap="round"/>
+            <rect x="44" y="14" width="26" height="140" rx="5" fill="var(--border)" opacity=".6"/>
+            <rect x="190" y="14" width="26" height="140" rx="5" fill="var(--border)" opacity=".6"/>
+            <!-- fill bars (anchored bottom=154, height set by JS) -->
+            <rect id="viz-ll-bar" x="44" y="154" width="26" height="0" rx="5" fill="#22c55e" opacity=".85"/>
+            <rect id="viz-rl-bar" x="190" y="154" width="26" height="0" rx="5" fill="#22c55e" opacity=".85"/>
+            <!-- position marker dots — always visible, y updated by JS -->
+            <circle id="viz-ll-dot" cx="57" cy="154" r="8" fill="#22c55e"/>
+            <circle id="viz-rl-dot" cx="203" cy="154" r="8" fill="#22c55e"/>
+            <!-- rail beam connecting the two marker dots -->
+            <line id="viz-beam" x1="65" y1="154" x2="190" y2="154" stroke="#7dba3a" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="6 4"/>
+            <!-- direction arrows inside dots (▲/▼ text) -->
+            <text id="viz-ll-arr" x="57" y="158" text-anchor="middle" font-size="10" fill="white" font-family="Outfit,sans-serif">•</text>
+            <text id="viz-rl-arr" x="203" y="158" text-anchor="middle" font-size="10" fill="white" font-family="Outfit,sans-serif">•</text>
             <!-- labels -->
-            <text x="57" y="168" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">LEFT</text>
-            <text x="203" y="168" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">RIGHT</text>
-            <!-- position % labels above bars -->
-            <text id="viz-ll-pct" x="57" y="8" text-anchor="middle" font-size="10" fill="var(--text)" font-family="Outfit,sans-serif">—</text>
-            <text id="viz-rl-pct" x="203" y="8" text-anchor="middle" font-size="10" fill="var(--text)" font-family="Outfit,sans-serif">—</text>
+            <text x="57" y="174" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">LEFT</text>
+            <text x="203" y="174" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="Outfit,sans-serif">RIGHT</text>
+            <!-- TOP / BOTTOM markers -->
+            <text x="26" y="18" text-anchor="end" font-size="9" fill="var(--text-muted)" font-family="Outfit,sans-serif">TOP</text>
+            <text x="26" y="158" text-anchor="end" font-size="9" fill="var(--text-muted)" font-family="Outfit,sans-serif">BOT</text>
+            <!-- position % labels -->
+            <text id="viz-ll-pct" x="57" y="10" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Outfit,sans-serif">—</text>
+            <text id="viz-rl-pct" x="203" y="10" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Outfit,sans-serif">—</text>
           </svg>
           <!-- delta + direction panel -->
           <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:120px;">

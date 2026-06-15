@@ -254,24 +254,38 @@ function updateLiftViz(){
 
   lBar.setAttribute('y',lY); lBar.setAttribute('height',lH);
   rBar.setAttribute('y',rY); rBar.setAttribute('height',rH);
-  // beam connects top-centre of each bar
-  beam.setAttribute('x1',74); beam.setAttribute('y1',lY);
-  beam.setAttribute('x2',186); beam.setAttribute('y2',rY);
 
-  const delta=ll.ppos - Math.abs(rl.ppos);  // signed delta counts
+  // marker dots sit at the current position level
+  const lDot=document.getElementById('viz-ll-dot');
+  const rDot=document.getElementById('viz-rl-dot');
+  const lArr=document.getElementById('viz-ll-arr');
+  const rArr=document.getElementById('viz-rl-arr');
+  if(lDot){lDot.setAttribute('cy',lY);}
+  if(rDot){rDot.setAttribute('cy',rY);}
+
+  // beam connects the two dots
+  beam.setAttribute('x1',65); beam.setAttribute('y1',lY);
+  beam.setAttribute('x2',190); beam.setAttribute('y2',rY);
+
+  const delta=lp - rp;   // both absolute, positive
   const absDelta=Math.abs(delta);
   const col=absDelta<50?'#22c55e':absDelta<200?'#f59e0b':'#ef4444';
   lBar.setAttribute('fill',col); rBar.setAttribute('fill',col);
+  if(lDot)lDot.setAttribute('fill',col);
+  if(rDot)rDot.setAttribute('fill',col);
   beam.setAttribute('stroke',col);
+
+  // direction arrow inside dot
+  const isUp=ll.ppos>=0&&lp<Math.abs(ll.tpos);
+  const arrChar=isUp?'▲':'▼';
+  if(lArr){lArr.textContent=arrChar;lArr.setAttribute('y',lY+4);}
+  if(rArr){rArr.textContent=arrChar;rArr.setAttribute('y',rY+4);}
 
   if(lPctEl) lPctEl.textContent=Math.round(lPct*100)+'%';
   if(rPctEl) rPctEl.textContent=Math.round(rPct*100)+'%';
-  if(deltaEl){deltaEl.textContent=(delta>=0?'+':'')+delta.toFixed(0);deltaEl.style.color=col;}
-
-  // direction from which lift is moving
-  const dir=ll.ppos>0?'▲ UP':'▼ DOWN';
-  if(dirEl) dirEl.textContent=ll.tpos>0?(ll.ppos<ll.tpos?'▲ UP':'▼ DOWN'):'—';
-  if(strokeEl) strokeEl.textContent=`${lp.toFixed(0)} / ${rp.toFixed(0)}`;
+  if(deltaEl){deltaEl.textContent=(delta>=0?'+':'')+Math.round(delta);deltaEl.style.color=col;}
+  if(dirEl) dirEl.textContent=isUp?'▲ UP':'▼ DOWN';
+  if(strokeEl) strokeEl.textContent=`${Math.round(lp)} / ${Math.round(rp)}`;
 }
 
 function updateLiftUI(src, data){
