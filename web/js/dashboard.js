@@ -130,7 +130,6 @@ function openMachine(mid){
   // FlyerFrame-specific: lift panel + settings
   document.getElementById('lift-panel').style.display=s(def.hasLifts);
   document.getElementById('settings-flyer-section').style.display=s(def.hasLifts);
-  if(!def.hasLifts){_liftVizState.ll={ppos:0,tpos:1};_liftVizState.rl={ppos:0,tpos:1};}
   // Extra motor cards (m4-m6)
   const extraMotors=def.extraMotors||[];
   ['m4','m5','m6','m7','m8'].forEach(id=>{
@@ -228,73 +227,13 @@ function setBar(id,p){const el=document.getElementById(id);if(el)el.style.width=
 function flashSetting(id){const el=document.getElementById(id);if(!el)return;el.classList.add('updated');setTimeout(()=>el.classList.remove('updated'),1500);}
 
 // ── LIFT UI UPDATE ──
-function _int16(hi,lo){const v=(hi<<8)|lo;return v>=0x8000?v-65536:v;}
-
-const _liftVizState = {ll:{ppos:0,tpos:1},rl:{ppos:0,tpos:1}};
-
-function updateLiftViz(){
-  const ll=_liftVizState.ll, rl=_liftVizState.rl;
-  // both lifts use absolute position (RightLift encoder is negative → abs)
-  const lp=Math.abs(ll.ppos), lt=Math.abs(ll.tpos)||1;
-  const rp=Math.abs(rl.ppos), rt=Math.abs(rl.tpos)||1;
-  const lPct=Math.min(1,lp/lt), rPct=Math.min(1,rp/rt);
-  const BAR_H=140;
-  const lH=Math.round(lPct*BAR_H), rH=Math.round(rPct*BAR_H);
-  const lY=150-lH, rY=150-rH;
-
-  const lBar=document.getElementById('viz-ll-bar');
-  const rBar=document.getElementById('viz-rl-bar');
-  const beam=document.getElementById('viz-beam');
-  const lPctEl=document.getElementById('viz-ll-pct');
-  const rPctEl=document.getElementById('viz-rl-pct');
-  const deltaEl=document.getElementById('viz-delta');
-  const dirEl=document.getElementById('viz-dir');
-  const strokeEl=document.getElementById('viz-stroke');
-  if(!lBar||!rBar||!beam)return;
-
-  lBar.setAttribute('y',lY); lBar.setAttribute('height',lH);
-  rBar.setAttribute('y',rY); rBar.setAttribute('height',rH);
-
-  // marker dots sit at the current position level
-  const lDot=document.getElementById('viz-ll-dot');
-  const rDot=document.getElementById('viz-rl-dot');
-  const lArr=document.getElementById('viz-ll-arr');
-  const rArr=document.getElementById('viz-rl-arr');
-  if(lDot){lDot.setAttribute('cy',lY);}
-  if(rDot){rDot.setAttribute('cy',rY);}
-
-  // beam connects the two dots
-  beam.setAttribute('x1',65); beam.setAttribute('y1',lY);
-  beam.setAttribute('x2',190); beam.setAttribute('y2',rY);
-
-  const delta=lp - rp;   // both absolute, positive
-  const absDelta=Math.abs(delta);
-  const col=absDelta<50?'#22c55e':absDelta<200?'#f59e0b':'#ef4444';
-  lBar.setAttribute('fill',col); rBar.setAttribute('fill',col);
-  if(lDot)lDot.setAttribute('fill',col);
-  if(rDot)rDot.setAttribute('fill',col);
-  beam.setAttribute('stroke',col);
-
-  // direction from firmware dir byte (1=UP, 2=DOWN)
-  const isUp = (ll.dir||0) === 1;
-  const arrChar = isUp ? '▲' : '▼';
-  if(lArr){lArr.textContent=arrChar;lArr.setAttribute('y',lY+4);}
-  if(rArr){rArr.textContent=arrChar;rArr.setAttribute('y',rY+4);}
-
-  if(lPctEl) lPctEl.textContent=Math.round(lPct*100)+'%';
-  if(rPctEl) rPctEl.textContent=Math.round(rPct*100)+'%';
-  if(deltaEl){deltaEl.textContent=(delta>=0?'+':'')+Math.round(delta);deltaEl.style.color=col;}
-  if(dirEl){dirEl.textContent=isUp?'▲ UP':'▼ DOWN';dirEl.style.color=isUp?'#22c55e':'#3b82f6';}
-  if(strokeEl) strokeEl.textContent=`${Math.round(lp)} / ${Math.round(rp)}`;
-}
-
 function updateLiftUI(src, data){
   // 0x04=LeftLift→ll, 0x05=RightLift→rl
   const p = src===0x04 ? 'll' : src===0x05 ? 'rl' : null;
   if(!p) return;
-  // LiftRuntime (0x0C): [0:1]=TPOS [2:3]=PPOS [4:5]=RPM [6:7]=PWM [8]=FET [9]=MOT [10:11]=Curr [12:13]=Volt [14]=pad [15:16]=GBPos [17:18]=EncPos [19]=UsingPos
-  const tpos = _int16(data[0],data[1]);
-  const ppos = _int16(data[2],data[3]);
+  // LiftRuntime (0x0C): [0:1]=TPOS(/100m) [2:3]=PPOS(/100m) [4:5]=RPM [6:7]=PWM [8]=FET [9]=MOT [10:11]=Curr [12:13]=Volt [14]=pad [15:16]=GBPos [17:18]=EncPos [19]=UsingPos
+  const tpos = ((data[0]<<8)|data[1])/100;
+  const ppos = ((data[2]<<8)|data[3])/100;
   const rpm  = (data[4]<<8)|data[5];
   const fet  = data[8], mot = data[9];
   const curr = (data[10]<<8)|data[11];
@@ -302,8 +241,8 @@ function updateLiftUI(src, data){
   const dir  = data.length>=20 ? data[19] : (data[14]||0);
   const ca   = (curr*CURR_GAIN).toFixed(3);
   const vv   = (volt*VOLT_GAIN).toFixed(2);
-  setVal(p+'-tpos', tpos);
-  setVal(p+'-ppos', ppos);
+  setVal(p+'-tpos', tpos.toFixed(2));
+  setVal(p+'-ppos', ppos.toFixed(2));
   setVal(p+'-rpm',  rpm);
   setVal(p+'-curr', ca);
   setVal(p+'-volt', vv);
@@ -312,9 +251,6 @@ function updateLiftUI(src, data){
   setTempArc(p+'-mot-arc', p+'-mot', mot);
   const card = document.getElementById('card-'+p);
   if(card) card.classList.add('active');
-  // feed seesaw viz
-  _liftVizState[p]={ppos,tpos,dir};
-  if(activeMachine===3) updateLiftViz();
 }
 
 function setTempArc(arcId,valId,temp){
