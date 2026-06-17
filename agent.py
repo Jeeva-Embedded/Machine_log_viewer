@@ -226,36 +226,33 @@ def csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n, dlc, nb, data_hex
     return ','.join(c)
 
 
-# ── ALWAYS-ON logging: per-machine, per-DAY raw+csv files ──────────────────────
-# Logging runs whenever the agent is connected to the converter — no browser needed.
-# Each machine appends to a daily file; at midnight (IST) the file rolls over and the
-# finished day is pushed to Drive. Connect/Disconnect on the website now only controls
-# the LIVE VIEW, not logging. The day's open files are also synced to Drive every
-# UPLOAD_EVERY seconds (see drive_sync_loop) so the cloud copy stays fresh.
-_logfiles = {}      # (mid, kind) -> {'day':'YYYY-MM-DD', 'fh':file, 'path':str}
+# ── PER-SESSION logging: one raw+csv pair per machine per agent run ─────────────
+# Files are created when the agent starts (SESSION_TS), so every agent launch
+# produces its own distinct files. Logging runs regardless of relay/browser state.
+# The relay is only a live-forward channel — losing it never gaps the log files.
+SESSION_TS = datetime.now(IST).strftime('%Y-%m-%dT%H-%M-%S')
+_logfiles  = {}   # (mid, kind) -> {'fh': file, 'path': str}
+_relay_ws  = None # current live relay ws (None = not connected); set by run()
 
-def _today_ist():
-    return datetime.now(IST).strftime('%Y-%m-%d')
+def _log_open(mid):
+    """Open (create) session log files for machine mid — called once on first frame."""
+    for kind, ext in [('raw', 'txt'), ('decoded', 'csv')]:
+        key = (mid, kind)
+        if key in _logfiles:
+            continue
+        path = os.path.join(LOG_DIR,
+                            f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{SESSION_TS}_{kind}.{ext}")
+        fh = open(path, 'w', encoding='utf-8')
+        if kind == 'decoded':
+            fh.write(CSV_HEADER)
+        _logfiles[key] = {'fh': fh, 'path': path}
+        print(f"[M{mid}] log opened: {os.path.basename(path)}")
 
-def _log_write(mid, kind, line, header=None):
-    today = _today_ist()
-    key = (mid, kind)
-    cur = _logfiles.get(key)
-    if cur is None or cur['day'] != today:
-        if cur:                       # day rolled over -> close + upload the finished file
-            try: cur['fh'].close()
-            except Exception: pass
-            asyncio.create_task(upload_to_drive([cur['path']]))
-        ext = 'txt' if kind == 'raw' else 'csv'
-        path = os.path.join(LOG_DIR, f"M{mid}_{MACHINE_NAME.get(mid,mid)}_{today}_{kind}.{ext}")
-        new = not os.path.exists(path)
-        fh = open(path, 'a', encoding='utf-8')
-        if new and header:
-            fh.write(header)
-        _logfiles[key] = {'day': today, 'fh': fh, 'path': path}
-        cur = _logfiles[key]
-    cur['fh'].write(line)
-    cur['fh'].flush()
+def _log_write(mid, kind, line):
+    entry = _logfiles.get((mid, kind))
+    if entry:
+        entry['fh'].write(line)
+        entry['fh'].flush()
 
 def open_log_paths():
     return list({e['path'] for e in _logfiles.values()})
@@ -299,31 +296,36 @@ async def drive_sync_loop():
             await upload_to_drive(changed)
 
 
-async def read_machine(mid, port, relay):
-    # name maps are looked up per-frame via addr_name()/fn_name() so a config
-    # pushed from the website takes effect live, without restarting the agent.
+async def read_machine(mid, port):
+    """Read CAN converter for machine mid — runs FOREVER regardless of relay state.
+    Logging starts on the first frame. The relay is only a live-forward channel;
+    losing it never pauses or gaps the log files.
+    """
+    global _relay_ws
     loop = asyncio.get_event_loop()
-    # Keep trying to (re)connect to the converter for as long as the relay is up,
-    # so a temporary converter hiccup (or stale socket) doesn't stop a machine forever.
-    while not relay.closed:
+    _log_open(mid)   # create session files immediately so empty files still appear
+    while True:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setblocking(False)   # non-blocking connect so an offline converter can't freeze the loop
+        sock.setblocking(False)
         try:
             await asyncio.wait_for(loop.sock_connect(sock, (HOST, port)), timeout=5)
-            print(f"[M{mid}] reading {HOST}:{port}")
+            print(f"[M{mid}] connected {HOST}:{port}")
         except Exception as e:
             print(f"[M{mid}] offline ({HOST}:{port}) — {e}; retry in 5s")
-            try: await relay.send_str(json.dumps({'machine': mid, 'event': 'offline'}))
-            except Exception: pass
+            ws = _relay_ws
+            if ws and not ws.closed:
+                try: await ws.send_str(json.dumps({'machine': mid, 'event': 'offline'}))
+                except Exception: pass
             sock.close()
             await asyncio.sleep(5)
             continue
         buf = b''
         try:
-            while not relay.closed:
+            while True:   # read until converter drops — relay state is irrelevant
                 try:
                     chunk = await asyncio.wait_for(loop.sock_recv(sock, 8192), timeout=0.05)
-                    if not chunk: break
+                    if not chunk:
+                        break
                     buf += chunk
                     while len(buf) >= 69:
                         frame = buf[:69]; buf = buf[69:]
@@ -337,21 +339,22 @@ async def read_machine(mid, port, relay):
                         fn_n  = fn_name(mid, fn)
                         src_n = addr_name(mid, src)
                         dst_n = addr_name(mid, dst)
-                        # 1) push live to relay
-                        msg = {'machine': mid, 'ts': ts, 'can_id': f'0x{can_id:08X}',
-                               'fn': fn, 'fn_name': fn_n, 'src': src, 'src_name': src_n,
-                               'dst': dst, 'dst_name': dst_n, 'dlc_code': dlc_code,
-                               'num_bytes': nb, 'raw_hex': data_hex, 'data': data}
-                        try: await relay.send_str(json.dumps(msg))
-                        except Exception: pass
-                        # 2) save to disk
+                        # 1) forward live to relay (best-effort — never blocks logging)
+                        ws = _relay_ws
+                        if ws and not ws.closed:
+                            msg = {'machine': mid, 'ts': ts, 'can_id': f'0x{can_id:08X}',
+                                   'fn': fn, 'fn_name': fn_n, 'src': src, 'src_name': src_n,
+                                   'dst': dst, 'dst_name': dst_n, 'dlc_code': dlc_code,
+                                   'num_bytes': nb, 'raw_hex': data_hex, 'data': data}
+                            try: await ws.send_str(json.dumps(msg))
+                            except Exception: pass
+                        # 2) always write to disk
                         _log_write(mid, 'raw',
                                    f"{ts} | 0x{can_id:08X} | FN:0x{fn:02X} SRC:0x{src:02X} DST:0x{dst:02X} | "
                                    f"DLC_code:{dlc_code} Bytes:{nb} | {data_hex}\n")
                         _log_write(mid, 'decoded',
                                    csv_row(mid, ts, can_id, fn, fn_n, src, src_n, dst, dst_n,
-                                           dlc_code, nb, data_hex, data) + '\n',
-                                   header=CSV_HEADER)
+                                           dlc_code, nb, data_hex, data) + '\n')
                 except asyncio.TimeoutError:
                     await asyncio.sleep(0.02)
                 except (ConnectionResetError, OSError):
@@ -360,31 +363,32 @@ async def read_machine(mid, port, relay):
             sock.close(); return
         finally:
             sock.close()
-        # converter dropped the connection — reconnect (recording is viewer-driven, not link-driven)
-        if not relay.closed:
-            print(f"[M{mid}] converter link dropped — reconnecting in 3s")
-            await asyncio.sleep(3)
+        print(f"[M{mid}] converter dropped — reconnecting in 3s")
+        await asyncio.sleep(3)
 
 
 def build_manifest():
     files = []
-    if os.path.isdir(LOG_DIR):
-        for fn in sorted(os.listdir(LOG_DIR)):
-            full = os.path.join(LOG_DIR, fn)
-            if not os.path.isfile(full):
-                continue
-            # M{mid}_{Name}_{date}_{kind}.{ext}
-            try:
-                parts = fn.rsplit('_', 2)        # [M1_DrawFrame, 2026-06-05, raw.txt]
-                date = parts[1]
-                kind = parts[2].split('.')[0]
-                mid  = int(parts[0].split('_')[0][1:])
-            except Exception:
-                continue
-            files.append({'name': fn, 'machine': mid,
-                          'machine_name': MACHINE_NAME.get(mid, f'M{mid}'),
-                          'date': date, 'kind': kind,
-                          'size': os.path.getsize(full)})
+    if not os.path.isdir(LOG_DIR):
+        return files
+    for fn in sorted(os.listdir(LOG_DIR), reverse=True):   # newest first
+        full = os.path.join(LOG_DIR, fn)
+        if not os.path.isfile(full):
+            continue
+        # M{mid}_{Name}_{SESSION_TS}_{kind}.{ext}
+        # e.g. M3_FlyerFrame_2026-06-17T08-30-00_raw.txt
+        try:
+            parts = fn.rsplit('_', 2)   # ['M3_FlyerFrame', '2026-06-17T08-30-00', 'raw.txt']
+            session = parts[1]          # '2026-06-17T08-30-00'
+            date    = session[:10]      # '2026-06-17'
+            kind    = parts[2].split('.')[0]
+            mid     = int(parts[0].split('_')[0][1:])
+        except Exception:
+            continue
+        files.append({'name': fn, 'machine': mid,
+                      'machine_name': MACHINE_NAME.get(mid, f'M{mid}'),
+                      'date': date, 'session': session, 'kind': kind,
+                      'size': os.path.getsize(full)})
     return files
 
 
@@ -439,36 +443,47 @@ async def recv_control(relay):
 
 
 async def run():
+    global _relay_ws
     os.makedirs(LOG_DIR, exist_ok=True)
     load_can_config()
     url = f"{RELAY_URL}?token={FEED_TOKEN}"
     print("=" * 58)
     print("  Textile CAN Monitor — Laptop Agent")
     print("=" * 58)
+    print(f"  Session   : {SESSION_TS}")
     print(f"  Converter : {HOST}  (ports {list(MACHINES.values())})")
     print(f"  Relay     : {RELAY_URL}")
     print(f"  Logs      : {LOG_DIR}")
     print("=" * 58)
-    asyncio.create_task(drive_sync_loop())   # always-on Drive backup, independent of the relay
+
+    # Machine reading tasks start ONCE and run for the lifetime of the agent.
+    # They log to disk regardless of whether the relay is connected.
+    for mid, port in MACHINES.items():
+        asyncio.create_task(read_machine(mid, port))
+
+    asyncio.create_task(drive_sync_loop())
+
+    # Relay reconnect loop — only relay-dependent tasks restart here.
     while True:
         try:
             async with aiohttp.ClientSession() as s:
                 async with s.ws_connect(url, heartbeat=20, max_msg_size=0) as relay:
-                    print("[+] Connected to relay — streaming + logging...")
-                    # seed the relay with our config so it survives Render redeploys
+                    _relay_ws = relay
+                    print("[+] Relay connected — live streaming active")
                     if CAN_CONFIG is not None:
                         try:
                             await relay.send_str(json.dumps({'type': 'can_config', 'config': CAN_CONFIG}))
                         except Exception:
                             pass
-                    tasks = [asyncio.create_task(read_machine(mid, port, relay))
-                             for mid, port in MACHINES.items()]
-                    tasks.append(asyncio.create_task(recv_control(relay)))
-                    tasks.append(asyncio.create_task(manifest_loop(relay)))
-                    await asyncio.gather(*tasks, return_exceptions=True)
+                    await asyncio.gather(
+                        asyncio.create_task(recv_control(relay)),
+                        asyncio.create_task(manifest_loop(relay)),
+                        return_exceptions=True)
+            _relay_ws = None
             print("[-] Relay closed — reconnecting in 5s")
         except Exception as e:
-            print(f"[!] Relay connection failed: {e} — retry in 5s")
+            _relay_ws = None
+            print(f"[!] Relay error: {e} — retry in 5s")
         await asyncio.sleep(5)
 
 
