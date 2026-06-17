@@ -231,9 +231,10 @@ function updateLiftUI(src, data){
   // 0x04=LeftLift→ll, 0x05=RightLift→rl
   const p = src===0x04 ? 'll' : src===0x05 ? 'rl' : null;
   if(!p) return;
-  // LiftRuntime (0x0C): [0:1]=TPOS(/100m) [2:3]=PPOS(/100m) [4:5]=RPM [6:7]=PWM [8]=FET [9]=MOT [10:11]=Curr [12:13]=Volt [14]=pad [15:16]=GBPos [17:18]=EncPos [19]=UsingPos
-  const tpos = ((data[0]<<8)|data[1])/100;
-  const ppos = ((data[2]<<8)|data[3])/100;
+  // LiftRuntime (0x0C): [0:1]=TPOS(/100m) [2:3]=PPOS(/100m) signed int16 [4:5]=RPM [6:7]=PWM [8]=FET [9]=MOT [10:11]=Curr [12:13]=Volt [14]=pad [15:16]=GBPos [17:18]=EncPos [19]=UsingPos
+  const s16 = v => v > 32767 ? v - 65536 : v;
+  const tpos = s16((data[0]<<8)|data[1])/100;
+  const ppos = s16((data[2]<<8)|data[3])/100;
   const rpm  = (data[4]<<8)|data[5];
   const fet  = data[8], mot = data[9];
   const curr = (data[10]<<8)|data[11];
@@ -393,7 +394,8 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
     const P=src===0x04?'LL':src===0x05?'RL':null;
     if(P) pushChart(mid,P,(data[4]<<8)|data[5],(data[4]<<8)|data[5],((data[10]<<8)|data[11])*CURR_GAIN,data[8],data[9]);
     if(live) updateLiftUI(src, data);
-    const tpos=((data[0]<<8)|data[1])/100, ppos=((data[2]<<8)|data[3])/100;
+    const _s16=v=>v>32767?v-65536:v;
+    const tpos=_s16((data[0]<<8)|data[1])/100, ppos=_s16((data[2]<<8)|data[3])/100;
     const rpm=(data[4]<<8)|data[5], ca=((data[10]<<8)|data[11])*CURR_GAIN;
     const lname=def.addrMap[src]||`0x${src.toString(16)}`;
     if(live)addLog(ts,cid,'LiftRuntime',src,dst,`${lname} TPOS:${tpos.toFixed(2)}m PPOS:${ppos.toFixed(2)}m RPM:${rpm} ${ca.toFixed(2)}A FET:${data[8]}°C`);
