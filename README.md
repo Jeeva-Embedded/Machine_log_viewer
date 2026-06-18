@@ -1,4 +1,4 @@
-﻿# Textile CAN Monitor â€” Gen4 Industrial IoT
+﻿# Textile CAN Monitor Gen4 Industrial IoT
 
 Live monitoring of textile machinery (**DrawFrame Â· BlowCard Â· FlyerFrame Â· RingFrame**)
 over a **UTEK UT-6504-FD** CAN-FD-to-Ethernet converter, viewable from anywhere, with
