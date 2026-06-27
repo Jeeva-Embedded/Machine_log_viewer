@@ -249,6 +249,8 @@ def _log_open(mid):
         print(f"[M{mid}] log opened: {os.path.basename(path)}")
 
 def _log_write(mid, kind, line):
+    if (mid, kind) not in _logfiles:
+        _log_open(mid)   # lazy: only create files when first real frame arrives
     entry = _logfiles.get((mid, kind))
     if entry:
         entry['fh'].write(line)
@@ -303,7 +305,6 @@ async def read_machine(mid, port):
     """
     global _relay_ws
     loop = asyncio.get_event_loop()
-    _log_open(mid)   # create session files immediately so empty files still appear
     while True:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
