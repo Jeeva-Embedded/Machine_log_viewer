@@ -260,20 +260,27 @@ def open_log_paths():
     return list({e['path'] for e in _logfiles.values()})
 
 async def upload_to_drive(paths):
-    """Upload (overwrite) the given log files to the Google Drive folder via rclone."""
+    """Upload log files to Google Drive, organised into per-machine subfolders.
+    Filename format: M{mid}_{MachineName}_{SESSION_TS}_{kind}.{ext}
+    → uploaded to: <DRIVE_FOLDER_ID>/<MachineName>/<filename>
+    """
     if not DRIVE_FOLDER_ID or not paths:
         return
-    dest = f"gdrive,root_folder_id={DRIVE_FOLDER_ID}:"
     for p in paths:
+        fname = os.path.basename(p)
+        # extract machine name from filename: M1_DrawFrame_... → DrawFrame
+        parts = fname.split('_')
+        machine_folder = parts[1] if len(parts) >= 2 else 'Unknown'
+        dest = f"gdrive,root_folder_id={DRIVE_FOLDER_ID}:{machine_folder}/{fname}"
         try:
             proc = await asyncio.create_subprocess_exec(
-                RCLONE, 'copyto', p, dest + os.path.basename(p),
+                RCLONE, 'copyto', p, dest,
                 stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE)
             _, err = await proc.communicate()
             if proc.returncode == 0:
-                print(f"[DRIVE] uploaded {os.path.basename(p)}")
+                print(f"[DRIVE] uploaded {machine_folder}/{fname}")
             else:
-                print(f"[DRIVE] upload failed {os.path.basename(p)}: {(err or b'').decode(errors='ignore')[:150]}")
+                print(f"[DRIVE] upload failed {machine_folder}/{fname}: {(err or b'').decode(errors='ignore')[:150]}")
         except FileNotFoundError:
             print(f"[DRIVE] rclone not found at '{RCLONE}' — set RCLONE path"); return
         except Exception as e:
