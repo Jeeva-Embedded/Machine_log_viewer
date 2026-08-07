@@ -6,6 +6,11 @@ const MACHINE_DEFS   = window.MACHINE_DEFS   || {};
 
 const CANFD_DLC={0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:12,10:16,11:20,12:24,13:32,14:48,15:64};
 const CURR_GAIN=0.00672,VOLT_GAIN=0.017,MAX_RPM=800,MAX_TEMP=100,MAX_PTS=60;
+// DrawFrame BR uses INA181 bidirectional sensor (REV4); all others use INA180 unidirectional
+function calcCurrA(mid,pfx,adc){
+  if(mid===1&&pfx==='br') return Math.max(0,(adc*0.000806-0.8188)/0.12);
+  return adc*CURR_GAIN;
+}
 // FN_MAP kept as DrawFrame default; per-machine maps are in MACHINE_DEFS
 const FN_MAP={0x01:'MotorState',0x02:'Error',0x07:'RunSetup',0x09:'RuntimeData',0x0A:'Diagnostics',0x0F:'ACK',0x1E:'AL_Sensor',0x1F:'AL_Setup',0x20:'ACK',0x24:'AL_Settings'};
 const ADDR_MAP={0x01:'MB',0x02:'FR',0x03:'BR',0x04:'CREEL',0x0A:'AL'};
@@ -269,7 +274,7 @@ function setTempArc(arcId,valId,temp){
 
 // paint only the DOM for one motor card (no chart push)
 function paintMotor(pfx,d){
-  const ca=(d.currADC*CURR_GAIN).toFixed(3),vv=(d.voltADC*VOLT_GAIN).toFixed(2),pw=(parseFloat(ca)*parseFloat(vv)).toFixed(1);
+  const ca=(d.currA!==undefined?d.currA:d.currADC*CURR_GAIN).toFixed(3),vv=(d.voltADC*VOLT_GAIN).toFixed(2),pw=(parseFloat(ca)*parseFloat(vv)).toFixed(1);
   setVal(pfx+'-trpm',d.tRPM);setVal(pfx+'-prpm',d.pRPM);setVal(pfx+'-pwm',d.pwm);
   setVal(pfx+'-curr',ca);setVal(pfx+'-volt',vv);setVal(pfx+'-pwr',pw);
   const rp=Math.min(100,d.pRPM/MAX_RPM*100);
@@ -281,8 +286,9 @@ function paintMotor(pfx,d){
 
 function updateMotorUI(mid,pfx,d){
   const mst=machineState[mid],KEY=pfx.toUpperCase();
+  d.currA=calcCurrA(mid,pfx,d.currADC);
   mst.snap.motors[pfx]=d;                                   // remember for re-render on machine switch
-  pushChart(mid,KEY,d.tRPM,d.pRPM,d.currADC*CURR_GAIN,d.fet,d.mot);  // stores history; paints chart only if active
+  pushChart(mid,KEY,d.tRPM,d.pRPM,d.currA,d.fet,d.mot);   // stores history; paints chart only if active
   if(mst.motorStopTimer[KEY]){clearTimeout(mst.motorStopTimer[KEY]);mst.motorStopTimer[KEY]=null;}
   if(mid===activeMachine) paintMotor(pfx,d);
 }
@@ -345,7 +351,7 @@ function decodeFrame(mid,fn,src,dst,data,ts_str,canId){
     const d={tRPM:(data[0]<<8)|data[1],pRPM:(data[2]<<8)|data[3],pwm:(data[4]<<8)|data[5],fet:data[6],mot:data[7],currADC:(data[8]<<8)|data[9],voltADC:(data[10]<<8)|data[11]};
     const pfx=def.motorMap[src];
     if(pfx)updateMotorUI(mid,pfx,d);
-    const ca=(d.currADC*CURR_GAIN).toFixed(2);
+    const ca=(d.currA!==undefined?d.currA:d.currADC*CURR_GAIN).toFixed(2);
     if(live)addLog(ts,cid,fnName,src,dst,`RPM ${d.pRPM}/${d.tRPM} · PWM ${d.pwm} · ${ca}A · ${(d.voltADC*VOLT_GAIN).toFixed(1)}V · FET ${d.fet}°C`);
   }
   // ── MOTOR STATE (FN=0x01) ──
